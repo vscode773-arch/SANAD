@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التقارير - السند برو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="container animate-fade-in">
+        <h1>التقارير والسجلات</h1>
+
+        <div style="margin-bottom: 2rem;">
+            <button onclick="showSection('summary')" class="btn btn-primary" id="btn-summary">الملخص المالي</button>
+            <button onclick="showSection('audit')" class="btn btn-outline" id="btn-audit">سجل النشاطات</button>
+        </div>
+
+        <!-- Summary Section -->
+        <div id="section-summary" class="animate-fade-in">
+            <div class="card">
+                <h2>الملخص المالي</h2>
+                <div style="display: flex; gap: 1rem; align-items: end; margin-bottom: 1rem;">
+                    <div>
+                        <label class="form-label">من تاريخ</label>
+                        <input type="date" id="repStart" class="form-control">
+                    </div>
+                    <div>
+                        <label class="form-label">إلى تاريخ</label>
+                        <input type="date" id="repEnd" class="form-control">
+                    </div>
+                    <button onclick="loadSummary()" class="btn btn-primary">عرض التقرير</button>
+                    <button onclick="window.print()" class="btn btn-outline">طباعة</button>
+                </div>
+
+                <div
+                    style="background: #f8fafc; padding: 2rem; border-radius: 1rem; text-align: center; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3>إجمالي الصرف</h3>
+                        <p id="repAmount" style="font-size: 3rem; color: var(--primary); font-weight: bold;">0</p>
+                    </div>
+                    <div>
+                        <h3>عدد العمليات</h3>
+                        <p id="repCount" style="font-size: 3rem; color: var(--text); font-weight: bold;">0</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 2rem;">آخر العمليات</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>رقم السند</th>
+                                <th>التاريخ</th>
+                                <th>المورد</th>
+                                <th>المبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="repRecentBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Section -->
+        <div id="section-audit" class="animate-fade-in" style="display: none;">
+            <div class="card">
+                <h2>سجل النشاطات (Audit Log)</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الوقت</th>
+                                <th>المستخدم</th>
+                                <th>الحدث</th>
+                                <th>الكيان</th>
+                                <th>التفاصيل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSummary(); // Load default
+            loadAudit();
+        });
+
+        function showSection(sec) {
+            document.getElementById('section-summary').style.display = sec === 'summary' ? 'block' : 'none';
+            document.getElementById('section-audit').style.display = sec === 'audit' ? 'block' : 'none';
+
+            document.getElementById('btn-summary').className = sec === 'summary' ? 'btn btn-primary' : 'btn btn-outline';
+            document.getElementById('btn-audit').className = sec === 'audit' ? 'btn btn-primary' : 'btn btn-outline';
+        }
+
+        async function loadSummary() {
+            const start = document.getElementById('repStart').value;
+            const end = document.getElementById('repEnd').value;
+
+            try {
+                const data = await Api.getSummary({ startDate: start, endDate: end });
+                document.getElementById('repAmount').innerText = parseFloat(data.totalAmount).toLocaleString() + ' ر.س';
+                document.getElementById('repCount').innerText = data.transactionCount;
+
+                const tbody = document.getElementById('repRecentBody');
+                tbody.innerHTML = '';
+                data.recentTransactions.forEach(t => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${t.voucherNo}</td>
+                            <td>${new Date(t.date).toLocaleDateString('ar-EG')}</td>
+                            <td>${t.supplier}</td>
+                            <td>${parseFloat(t.amount).toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadAudit() {
+            try {
+                const logs = await Api.getAuditLogs();
+                const tbody = document.getElementById('auditBody');
+                tbody.innerHTML = '';
+                logs.forEach(l => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td dir="ltr" style="text-align:right">${new Date(l.timestamp).toLocaleString('ar-EG')}</td>
+                            <td>${l.user.username}</td>
+                            <td><span style="padding: 2px 6px; border-radius: 4px; background: ${getActionColor(l.action)}; color: white; font-size: 0.8rem;">${l.action}</span></td>
+                            <td>${l.entity}</td>
+                            <td>${l.details}</td>
+                        </tr>
+                    `;
+                });
+            } catch (e) {
+                console.error(e); // Likely 403 if not admin
+                if (e.message.includes('403') || e.message.includes('401')) {
+                    document.getElementById('auditBody').innerHTML = '<tr><td colspan="5">غير مصرح لك بعرض السجل</td></tr>';
+                }
+            }
+        }
+
+        function getActionColor(action) {
+            if (action === 'CREATE') return 'green';
+            if (action === 'UPDATE') return 'orange';
+            if (action === 'DELETE') return 'red';
+            return 'gray';
+        }
+    </script>
+</body>
+
+</html>

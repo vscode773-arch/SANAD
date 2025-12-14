@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة السندات - السند برو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- jsPDF for Client Side Printing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@3.6.0/dist/jspdf.plugin.autotable.js"></script>
+</head>
+
+<body>
+
+    <div class="container animate-fade-in">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h1>سندات الصرف</h1>
+            <button class="btn btn-primary" onclick="openModal()" id="addBtn">+ إضافة سند</button>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                <input type="text" id="filterSupplier" placeholder="ابحث باسم المورد" class="form-control"
+                    style="max-width: 200px;">
+                <input type="date" id="filterStart" class="form-control" style="max-width: 150px;">
+                <input type="date" id="filterEnd" class="form-control" style="max-width: 150px;">
+                <button onclick="loadVouchers()" class="btn btn-outline">بحث</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>رقم السند</th>
+                            <th>التاريخ</th>
+                            <th>المورد</th>
+                            <th>المبلغ</th>
+                            <th>طريقة الدفع</th>
+                            <th>بواسطة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="voucherTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align:center">جاري التحميل...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem;" id="pagination">
+                <!-- Pagination Buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="voucherModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="card animate-fade-in" style="width: 100%; max-width: 500px; margin: 2rem;">
+            <h2 id="modalTitle" style="margin-bottom: 1rem;">إضافة سند جديد</h2>
+            <form id="voucherForm">
+                <input type="hidden" id="voucherId">
+                <div class="form-group">
+                    <label class="form-label">تاريخ السند</label>
+                    <input type="date" id="vDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المورد</label>
+                    <div style="display:flex; gap:0.5rem">
+                        <select id="vSupplier" class="form-control" required>
+                            <option value="">ختر مورد...</option>
+                        </select>
+                        <button type="button" onclick="window.location.href='/suppliers.html'" class="btn btn-outline"
+                            style="font-size:0.8rem">إدارة</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المبلغ</label>
+                    <input type="number" step="0.01" id="vAmount" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">طريقة الدفع</label>
+                    <select id="vMethod" class="form-control">
+                        <option value="Cash">نقد</option>
+                        <option value="Check">شيك</option>
+                        <option value="Transfer">تحويل بنكي</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">البيان / الوصف</label>
+                    <textarea id="vDesc" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button type="button" onclick="closeModal()" class="btn btn-outline">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        window.vouchersData = [];
+
+        // Hide add button for normal USER
+        if (currentUser.role === 'USER') {
+            document.getElementById('addBtn').style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSuppliers();
+            loadVouchers();
+        });
+
+        async function loadSuppliers() {
+            try {
+                const suppliers = await Api.getSuppliers();
+                const sel = document.getElementById('vSupplier');
+                // Keep first option
+                sel.innerHTML = '<option value="">اختر مورد...</option>';
+                suppliers.forEach(s => {
+                    sel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadVouchers(page = 1) {
+            const supplier = document.getElementById('filterSupplier').value;
+            const startDate = document.getElementById('filterStart').value;
+            const endDate = document.getElementById('filterEnd').value;
+
+            const tbody = document.getElementById('voucherTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">جاري التحميل...</td></tr>';
+
+            try {
+                const res = await Api.getVouchers({ page, supplier, startDate, endDate });
+                window.vouchersData = res.data;
+                tbody.innerHTML = '';
+
+                if (res.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">لا توجد بيانات</td></tr>';
+                    return;
+                }
+
+                res.data.forEach(v => {
+                    const row = document.createElement('tr');
+
+                    let actions = '';
+                    if (currentUser.role === 'ADMIN' || currentUser.role === 'ACCOUNTANT') {
+                        actions += `<button onclick="editVoucher(${v.id})" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">تعديل</button>`;
+                    }
+                    if (currentUser.role === 'ADMIN') {
+                        actions += `<button onclick="deleteVoucher(${v.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">حذف</button>`;
+                    }
+                    // Print button for all
+                    actions += `<button onclick="printVoucher('${v.voucherNo}', '${v.date}', '${v.supplier}', '${v.amount}', '${v.paymentMethod}', '${v.description || ''}', '${v.createdBy.fullName}')" class="btn btn-primary" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">طباعة</button>`;
+
+                    row.innerHTML = `
+                        <td>${v.voucherNo}</td>
+                        <td>${new Date(v.date).toLocaleDateString('ar-EG')}</td>
+                        <td>${v.supplier}</td>
+                        <td style="font-weight:bold; color: var(--primary);">${parseFloat(v.amount).toLocaleString()}</td>
+                        <td>${methodAr(v.paymentMethod)}</td>
+                        <td>${v.createdBy.fullName}</td>
+                        <td>
+                            ${actions}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Simple Pagination
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+                if (res.totalPages > 1) {
+                    if (page > 1) pagination.innerHTML += `<button onclick="loadVouchers(${page - 1})" class="btn btn-outline">السابق</button>`;
+                    pagination.innerHTML += `<span style="padding: 0.5rem;">صفحة ${page} من ${res.totalPages}</span>`;
+                    if (page < res.totalPages) pagination.innerHTML += `<button onclick="loadVouchers(${page + 1})" class="btn btn-outline">التالي</button>`;
+                }
+
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red">${error.message}</td></tr>`;
+            }
+        }
+
+        function methodAr(m) {
+            const map = { 'Cash': 'نقد', 'Check': 'شيك', 'Transfer': 'تحويل' };
+            return map[m] || m;
+        }
+
+        // Modal Logic
+        const modal = document.getElementById('voucherModal');
+        const form = document.getElementById('voucherForm');
+
+        function openModal(isEdit = false) {
+            modal.style.display = 'flex';
+            if (!isEdit) {
+                document.getElementById('modalTitle').innerText = 'إضافة سند جديد';
+                form.reset();
+                document.getElementById('voucherId').value = '';
+                document.getElementById('vDate').valueAsDate = new Date(); // Default today
+            }
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) closeModal();
+        }
+
+        // Create / Update
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('voucherId').value;
+            const data = {
+                date: document.getElementById('vDate').value,
+                supplierId: document.getElementById('vSupplier').value,
+                amount: parseFloat(document.getElementById('vAmount').value),
+                paymentMethod: document.getElementById('vMethod').value,
+                description: document.getElementById('vDesc').value
+            };
+
+            try {
+                if (id) {
+                    await Api.updateVoucher(id, data);
+                    alert('تم التعديل بنجاح');
+                } else {
+                    await Api.createVoucher(data);
+                    alert('تم الإضافة بنجاح');
+                }
+                closeModal();
+                loadVouchers();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        window.editVoucher = (id) => {
+            const voucher = window.vouchersData.find(v => v.id === id);
+            if (!voucher) return alert('خطأ: السند غير موجود');
+
+            openModal(true);
+            document.getElementById('modalTitle').innerText = 'تعديل سند ' + voucher.voucherNo;
+            document.getElementById('voucherId').value = voucher.id;
+            document.getElementById('vDate').value = new Date(voucher.date).toISOString().split('T')[0];
+
+            // Set Supplier Select
+            // We need supplier ID. 
+            // The backend list returns `supplier` name string (transformed). 
+            // Oh, I need supplierId in the list response to bind it.
+            // Backend `getVouchers` logic: `supplier: v.supplier ? v.supplier.name : v.supplierName`
+            // It mapped over the object. I should have kept `supplierId` or `supplier` object.
+            // Let's assume I can't easily get ID if I didn't send it. 
+            // I should update backend `getVouchers` to include `supplierId`.
+            // Wait, `prisma` returns `supplierId` by default in the root object if it's a field.
+            // Yes, `supplierId` is a field. 
+            // But my map: `return { ...v, supplier: ... }` preserves `supplierId`.
+            // So `voucher.supplierId` should be available.
+
+            document.getElementById('vSupplier').value = voucher.supplierId || '';
+
+            document.getElementById('vAmount').value = voucher.amount;
+            document.getElementById('vMethod').value = voucher.paymentMethod;
+            document.getElementById('vDesc').value = voucher.description || '';
+        };
+
+
+        window.deleteVoucher = async (id) => {
+            if (confirm('هل أنت متأكد من الحذف؟')) {
+                try {
+                    await Api.deleteVoucher(id);
+                    loadVouchers();
+                } catch (err) { alert(err.message); }
+            }
+        };
+
+        window.printVoucher = (no, date, supplier, amount, method, desc, user) => {
+            // Using jsPDF to generate a clean Voucher
+            const { jsPDF } = window.jspdf;
+
+            // Note: jsPDF default font doesn't support Arabic.
+            // We need to use html to canvas or a font.
+            // Recommending window.print() on a new tab for best Arabic support without heavy font loading.
+
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(`
+                <html dir="rtl" lang="ar">
+                <head>
+                    <title>سند صرف ${no}</title>
+                    <style>
+                        body { font-family: 'Tajawal', sans-serif; padding: 2rem; direction: rtl; }
+                        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 1rem; margin-bottom: 2rem; }
+                        .row { display: flex; margin-bottom: 1rem; }
+                        .label { font-weight: bold; width: 150px; }
+                        .value { flex: 1; border-bottom: 1px dotted #ccc; }
+                        .amount-box { border: 2px solid #333; padding: 1rem; text-align: center; font-size: 1.5rem; margin: 1rem 0; }
+                        .footer { margin-top: 3rem; display: flex; justify-content: space-between; }
+                    </style>
+                     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>سند صرف</h1>
+                        <h3>Payment Voucher</h3>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between;">
+                        <div><strong>رقم السند:</strong> ${no}</div>
+                        <div><strong>التاريخ:</strong> ${new Date(date).toLocaleDateString('ar-EG')}</div>
+                    </div>
+                    
+                    <div class="amount-box">
+                        ${parseFloat(amount).toLocaleString()} ريال
+                    </div>
+                    
+                    <div class="row">
+                        <span class="label">إلى السادة / </span>
+                        <span class="value">${supplier}</span>
+                    </div>
+                    
+                    <div class="row">
+                        <span class="label">وذلك عن / </span>
+                        <span class="value">${desc}</span>
+                    </div>
+                    
+                    <div class="row">
+                        <span class="label">طريقة الدفع / </span>
+                        <span class="value">${methodAr(method)}</span>
+                    </div>
+                    
+                    <div class="footer">
+                        <div>
+                            <p>المستلم</p>
+                            <br>
+                            ....................
+                        </div>
+                        <div>
+                            <p>المحاسب</p>
+                            <br>
+                            ${user}
+                        </div>
+                        <div>
+                            <p>المدير</p>
+                            <br>
+                            ....................
+                        </div>
+                    </div>
+                    
+                    <script>
+                        window.onload = function() { window.print(); }
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+    </script>
+</body>
+
+</html>

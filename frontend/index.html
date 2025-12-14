@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرئيسية - السند برو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="container animate-fade-in">
+        <div class="card">
+            <h1>مرحباً بك في نظام السند برو</h1>
+            <p>نظام إدارة سندات الصرف الاحترافي</p>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <a href="/vouchers.html" class="btn btn-primary">إدارة السندات</a>
+                <a href="/reports.html" class="btn btn-outline">التقارير</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>نظرة عامة</h2>
+            <div id="stats"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div style="padding: 1rem; background: #f1f5f9; border-radius: 0.5rem;">
+                    <h3>إجمالي السندات</h3>
+                    <p id="totalCount" style="font-size: 2rem; font-weight: bold; color: var(--primary);">...</p>
+                </div>
+                <div style="padding: 1rem; background: #f1f5f9; border-radius: 0.5rem;">
+                    <h3>إجمالي المبالغ</h3>
+                    <p id="totalAmount" style="font-size: 2rem; font-weight: bold; color: var(--success);">...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const data = await Api.getSummary();
+                document.getElementById('totalCount').innerText = data.transactionCount;
+                document.getElementById('totalAmount').innerText = parseFloat(data.totalAmount).toLocaleString() + ' ر.س';
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    </script>
+</body>
+
+</html>

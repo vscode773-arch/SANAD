@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الموردين - السند برو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="container animate-fade-in">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>إدارة الموردين</h1>
+            <button class="btn btn-primary" onclick="openSupplierModal()">+ إضافة مورد</button>
+        </div>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>رقم الهاتف</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>العنوان</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suppliersTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align:center">جاري التحميل...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="supplierModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="card animate-fade-in" style="width: 100%; max-width: 500px; margin: 2rem;">
+            <h2 id="modalTitle" style="margin-bottom: 1rem;">إضافة مورد جديد</h2>
+            <form id="supplierForm">
+                <input type="hidden" id="supplierId">
+                <div class="form-group">
+                    <label class="form-label">اسم المورد</label>
+                    <input type="text" id="sName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رقم الهاتف</label>
+                    <input type="text" id="sPhone" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <input type="email" id="sEmail" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">العنوان</label>
+                    <input type="text" id="sAddress" class="form-control">
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button type="button" onclick="closeModal()" class="btn btn-outline">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadSuppliers);
+
+        async function loadSuppliers() {
+            try {
+                const suppliers = await Api.getSuppliers();
+                const tbody = document.getElementById('suppliersTableBody');
+                tbody.innerHTML = '';
+
+                if (suppliers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">لا يوجد موردين</td></tr>';
+                    return;
+                }
+
+                suppliers.forEach(s => {
+                    const row = `
+                        <tr>
+                            <td>${s.name}</td>
+                            <td>${s.phone || '-'}</td>
+                            <td>${s.email || '-'}</td>
+                            <td>${s.address || '-'}</td>
+                            <td>
+                                <button onclick="editSupplier(${s.id}, '${s.name}', '${s.phone || ''}', '${s.email || ''}', '${s.address || ''}')" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>
+                                <button onclick="deleteSupplier(${s.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">حذف</button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        const modal = document.getElementById('supplierModal');
+        const form = document.getElementById('supplierForm');
+
+        function openSupplierModal() {
+            modal.style.display = 'flex';
+            document.getElementById('modalTitle').innerText = 'إضافة مورد جديد';
+            form.reset();
+            document.getElementById('supplierId').value = '';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function (e) { if (e.target == modal) closeModal(); }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('supplierId').value;
+            const data = {
+                name: document.getElementById('sName').value,
+                phone: document.getElementById('sPhone').value,
+                email: document.getElementById('sEmail').value,
+                address: document.getElementById('sAddress').value
+            };
+
+            try {
+                if (id) {
+                    await Api.updateSupplier(id, data);
+                } else {
+                    await Api.createSupplier(data);
+                }
+                closeModal();
+                loadSuppliers();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        window.editSupplier = (id, name, phone, email, address) => {
+            modal.style.display = 'flex';
+            document.getElementById('modalTitle').innerText = 'تعديل مورد';
+            document.getElementById('supplierId').value = id;
+            document.getElementById('sName').value = name;
+            document.getElementById('sPhone').value = phone;
+            document.getElementById('sEmail').value = email;
+            document.getElementById('sAddress').value = address;
+        };
+
+        window.deleteSupplier = async (id) => {
+            if (confirm('هل أنت متأكد من الحذف؟')) {
+                try {
+                    await Api.deleteSupplier(id);
+                    loadSuppliers();
+                } catch (err) { alert(err.message); }
+            }
+        };
+    </script>
+</body>
+
+</html>

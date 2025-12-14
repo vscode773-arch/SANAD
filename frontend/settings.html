@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الإعدادات والصيانة - السند برو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="container animate-fade-in">
+        <div style="margin-bottom: 2rem;">
+            <h1>الإعدادات والصيانة</h1>
+            <p style="color: #666;">إدارة إعدادات النظام والنسخ الاحتياطية</p>
+        </div>
+
+        <div class="card">
+            <h2>النسخ الاحتياطي لقاعدة البيانات</h2>
+            <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+                يمكنك تحميل نسخة كاملة من قاعدة البيانات الحالية. <br>
+                ينصح بالقيام بهذه الخطوة دورياً لضمان عدم ضياع البيانات.
+            </p>
+
+            <button onclick="downloadBackup()" class="btn btn-primary"
+                style="display: flex; align-items: center; gap: 0.5rem;">
+                <!-- Icon can go here -->
+                ⬇ تحميل نسخة احتياطية (.db)
+            </button>
+
+            <div id="msg" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem; border: 1px solid #ff9800;">
+            <h2 style="color: #e65100;">استعادة نسخة احتياطية</h2>
+            <p style="margin-bottom: 1.5rem; line-height: 1.6; color: red; font-weight: bold;">
+                تنبيه: هذه العملية ستقوم بحذف كافة البيانات الحالية واستبدالها بالنسخة المرفوعة.<br>
+                لا يمكن التراجع عن هذه العملية.
+            </p>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <input type="file" id="backupFile" accept=".db" class="form-control" style="max-width: 300px;">
+                <button onclick="restoreBackup()" class="btn btn-danger">استعادة النسخة</button>
+            </div>
+            <div id="restoreMsg" style="margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Future Settings can go here -->
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        async function downloadBackup() {
+            const btn = document.querySelector('.btn-primary');
+            const msg = document.getElementById('msg');
+
+            btn.disabled = true;
+            btn.innerText = 'جاري التحضير...';
+            msg.innerText = '';
+
+            try {
+                // Since this uses Api wrapper inside but response is a blob/file, 
+                // we might need a direct fetch or handle blob in wrapper.
+                // Wrapper expects JSON. Let's do a direct fetch with token.
+
+                const token = Api.token;
+                if (!token) return window.location.href = '/login.html';
+
+                const res = await fetch('/api/maintenance/backup', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error('غير مصرح لك بالقيام بهذا الإجراء');
+                }
+
+                if (!res.ok) {
+                    throw new Error('خطأ في تحميل الملف');
+                }
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sanad-backup-${new Date().toISOString().slice(0, 10)}.db`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+                msg.style.color = 'green';
+                msg.innerText = 'تم التحميل بنجاح';
+
+            } catch (err) {
+                msg.style.color = 'red';
+                msg.innerText = err.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '⬇ تحميل نسخة احتياطية (.db)';
+            }
+        }
+
+        async function restoreBackup() {
+            const fileInput = document.getElementById('backupFile');
+            const file = fileInput.files[0];
+            const msg = document.getElementById('restoreMsg');
+            const btn = document.querySelector('.btn-danger');
+
+            if (!file) return alert('الرجاء اختيار ملف أولاً');
+
+            if (!confirm('تحذير نهائي: هل أنت متأكد من استبدال قاعدة البيانات الحالية؟ ستفقد البيانات المضافة بعد تاريخ هذه النسخة.')) return;
+
+            btn.disabled = true;
+            btn.innerText = 'جاري الرفع والاستعادة...';
+            msg.innerText = '';
+
+            const formData = new FormData();
+            formData.append('backupFile', file);
+
+            try {
+                const token = Api.token;
+                const res = await fetch('/api/maintenance/restore', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+
+                msg.style.color = 'green';
+                msg.innerText = data.message;
+
+                setTimeout(() => {
+                    alert('سيتم تسجيل خروجك الآن');
+                    logout();
+                }, 2000);
+
+            } catch (err) {
+                msg.style.color = 'red';
+                msg.innerText = err.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'استعادة النسخة';
+            }
+        }
+    </script>
+</body>
+
+</html>

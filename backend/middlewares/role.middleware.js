@@ -1,0 +1,13 @@
+exports.authorize = (roles = []) => {
+    // roles param can be a single role string (e.g. Rate) or an array of strings (e.g. ['Admin', 'Accountant'])
+    if (typeof roles === 'string') {
+        roles = [roles];
+    }
+
+    return (req, res, next) => {
+        if (roles.length && !roles.includes(req.user.role)) {
+            return res.status(401).json({ message: 'غير مصرح لك بالقيام بهذا الإجراء' });
+        }
+        next();
+    };
+};

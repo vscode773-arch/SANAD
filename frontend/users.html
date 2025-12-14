@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المستخدمين - السند برو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="container animate-fade-in">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>إدارة المستخدمين</h1>
+            <button class="btn btn-primary" onclick="openUserModal()">+ إضافة مستخدم</button>
+        </div>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الاسم الكامل</th>
+                            <th>اسم المستخدم</th>
+                            <th>الدور (الصلاحية)</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align:center">جاري التحميل...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="userModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="card animate-fade-in" style="width: 100%; max-width: 500px; margin: 2rem;">
+            <h2 id="modalTitle" style="margin-bottom: 1rem;">إضافة مستخدم جديد</h2>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label class="form-label">الاسم الكامل</label>
+                    <input type="text" id="uFullname" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">اسم المستخدم</label>
+                    <input type="text" id="uUsername" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">كلمة المرور</label>
+                    <input type="password" id="uPassword" class="form-control"
+                        placeholder="اتركه فارغاً عند التعديل لعدم التغيير">
+                    <small style="color:var(--text-light); font-size: 0.8rem;">مطلوب عند الإضافة</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الدور (الصلاحية)</label>
+                    <select id="uRole" class="form-control">
+                        <option value="USER">مستخدم (عرض فقط)</option>
+                        <option value="ACCOUNTANT">محاسب</option>
+                        <option value="ADMIN">مدير</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button type="button" onclick="closeModal()" class="btn btn-outline">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadUsers);
+
+        async function loadUsers() {
+            try {
+                const users = await Api.getUsers();
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+
+                users.forEach(u => {
+                    const row = `
+                        <tr>
+                            <td>${u.fullName}</td>
+                            <td>${u.username}</td>
+                            <td>${roleAr(u.role)}</td>
+                            <td>
+                                <button onclick="editUser(${u.id}, '${u.fullName}', '${u.username}', '${u.role}')" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>
+                                <button onclick="deleteUser(${u.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">حذف</button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (err) {
+                document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;color:red">${err.message}</td></tr>`;
+            }
+        }
+
+        function roleAr(roi) {
+            const map = { 'ADMIN': 'مدير', 'ACCOUNTANT': 'محاسب', 'USER': 'مستخدم' };
+            return map[roi] || roi;
+        }
+
+        const modal = document.getElementById('userModal');
+        const form = document.getElementById('userForm');
+
+        function openUserModal() {
+            modal.style.display = 'flex';
+            document.getElementById('modalTitle').innerText = 'إضافة مستخدم جديد';
+            form.reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('uUsername').disabled = false;
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function (e) { if (e.target == modal) closeModal(); }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('userId').value;
+            const password = document.getElementById('uPassword').value;
+
+            // Validate password on create
+            if (!id && !password) return alert('كلمة المرور مطلوبة');
+
+            const data = {
+                fullName: document.getElementById('uFullname').value,
+                username: document.getElementById('uUsername').value,
+                role: document.getElementById('uRole').value,
+                password: password || undefined
+            };
+
+            try {
+                if (id) {
+                    await Api.updateUser(id, data);
+                } else {
+                    await Api.createUser(data);
+                }
+                closeModal();
+                loadUsers();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        window.editUser = (id, fullname, username, role) => {
+            modal.style.display = 'flex';
+            document.getElementById('modalTitle').innerText = 'تعديل مستخدم';
+            document.getElementById('userId').value = id;
+            document.getElementById('uFullname').value = fullname;
+            document.getElementById('uUsername').value = username;
+            document.getElementById('uUsername').disabled = true; // Can't change username usually
+            document.getElementById('uRole').value = role;
+            document.getElementById('uPassword').value = '';
+        };
+
+        window.deleteUser = async (id) => {
+            if (confirm('هل أنت متأكد من الحذف؟')) {
+                try {
+                    await Api.deleteUser(id);
+                    loadUsers();
+                } catch (err) { alert(err.message); }
+            }
+        };
+    </script>
+</body>
+
+</html>
