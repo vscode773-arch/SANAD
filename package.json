@@ -4,7 +4,7 @@
     "description": "Professional Payment Voucher Management System",
     "main": "backend/server.js",
     "scripts": {
-        "start": "node backend/server.js",
+        "start": "npm run prisma:deploy && node seed.js && node backend/server.js",
         "dev": "nodemon backend/server.js",
         "prisma:generate": "prisma generate --schema=./backend/prisma/schema.prisma",
         "prisma:migrate": "prisma migrate dev --schema=./backend/prisma/schema.prisma",
