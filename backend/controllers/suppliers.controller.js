@@ -3,7 +3,8 @@ const prisma = require('../utils/prisma');
 exports.getSuppliers = async (req, res, next) => {
     try {
         const suppliers = await prisma.supplier.findMany({
-            orderBy: { name: 'asc' }
+            orderBy: { name: 'asc' },
+            include: { branch: true }
         });
         res.json(suppliers);
     } catch (error) {
@@ -13,9 +14,12 @@ exports.getSuppliers = async (req, res, next) => {
 
 exports.createSupplier = async (req, res, next) => {
     try {
-        const { name, phone, email, address } = req.body;
+        const { name, phone, email, address, branchId } = req.body;
         const supplier = await prisma.supplier.create({
-            data: { name, phone, email, address }
+            data: {
+                name, phone, email, address,
+                branchId: branchId ? parseInt(branchId) : null
+            }
         });
 
         await prisma.auditLog.create({
@@ -39,11 +43,14 @@ exports.createSupplier = async (req, res, next) => {
 exports.updateSupplier = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { name, phone, email, address } = req.body;
+        const { name, phone, email, address, branchId } = req.body;
 
         const supplier = await prisma.supplier.update({
             where: { id: parseInt(id) },
-            data: { name, phone, email, address }
+            data: {
+                name, phone, email, address,
+                branchId: branchId ? parseInt(branchId) : null
+            }
         });
 
         await prisma.auditLog.create({

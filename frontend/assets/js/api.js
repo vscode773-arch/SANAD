@@ -106,4 +106,15 @@ class Api {
     static deleteUser(id) {
         return this.request(`/users/${id}`, 'DELETE');
     }
+
+    // Branches
+    static getBranches() {
+        return this.request('/branches');
+    }
+    static createBranch(data) {
+        return this.request('/branches', 'POST', data);
+    }
+    static deleteBranch(id) {
+        return this.request(`/branches/${id}`, 'DELETE');
+    }
 }

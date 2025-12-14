@@ -25,12 +25,13 @@
                             <th>الاسم الكامل</th>
                             <th>اسم المستخدم</th>
                             <th>الدور (الصلاحية)</th>
+                            <th>الفرع</th>
                             <th>إجراءات</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
                         <tr>
-                            <td colspan="4" style="text-align:center">جاري التحميل...</td>
+                            <td colspan="5" style="text-align:center">جاري التحميل...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -67,6 +68,12 @@
                         <option value="ADMIN">مدير</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">الفرع (اختياري)</label>
+                    <select id="uBranch" class="form-control">
+                        <option value="">لا يوجد فرع</option>
+                    </select>
+                </div>
 
                 <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
                     <button type="button" onclick="closeModal()" class="btn btn-outline">إلغاء</button>
@@ -79,7 +86,21 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', loadUsers);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+            loadBranches();
+        });
+
+        async function loadBranches() {
+            try {
+                const branches = await Api.getBranches();
+                const sel = document.getElementById('uBranch');
+                sel.innerHTML = '<option value="">لا يوجد فرع</option>';
+                branches.forEach(b => {
+                    sel.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                });
+            } catch (e) { console.error(e); }
+        }
 
         async function loadUsers() {
             try {
@@ -88,13 +109,15 @@
                 tbody.innerHTML = '';
 
                 users.forEach(u => {
+                    const branchName = u.branch ? u.branch.name : '-';
                     const row = `
                         <tr>
                             <td>${u.fullName}</td>
                             <td>${u.username}</td>
                             <td>${roleAr(u.role)}</td>
+                            <td>${branchName}</td>
                             <td>
-                                <button onclick="editUser(${u.id}, '${u.fullName}', '${u.username}', '${u.role}')" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>
+                                <button onclick="editUser(${u.id}, '${u.fullName}', '${u.username}', '${u.role}', '${u.branchId || ''}')" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>
                                 <button onclick="deleteUser(${u.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">حذف</button>
                             </td>
                         </tr>
@@ -102,7 +125,7 @@
                     tbody.innerHTML += row;
                 });
             } catch (err) {
-                document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;color:red">${err.message}</td></tr>`;
+                document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="5" style="text-align:center;color:red">${err.message}</td></tr>`;
             }
         }
 
@@ -140,6 +163,7 @@
                 fullName: document.getElementById('uFullname').value,
                 username: document.getElementById('uUsername').value,
                 role: document.getElementById('uRole').value,
+                branchId: document.getElementById('uBranch').value,
                 password: password || undefined
             };
 
@@ -156,7 +180,7 @@
             }
         });
 
-        window.editUser = (id, fullname, username, role) => {
+        window.editUser = (id, fullname, username, role, branchId) => {
             modal.style.display = 'flex';
             document.getElementById('modalTitle').innerText = 'تعديل مستخدم';
             document.getElementById('userId').value = id;
@@ -164,6 +188,7 @@
             document.getElementById('uUsername').value = username;
             document.getElementById('uUsername').disabled = true; // Can't change username usually
             document.getElementById('uRole').value = role;
+            document.getElementById('uBranch').value = branchId;
             document.getElementById('uPassword').value = '';
         };
 

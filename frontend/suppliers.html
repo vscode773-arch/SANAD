@@ -26,12 +26,13 @@
                             <th>رقم الهاتف</th>
                             <th>البريد الإلكتروني</th>
                             <th>العنوان</th>
+                            <th>الفرع</th>
                             <th>إجراءات</th>
                         </tr>
                     </thead>
                     <tbody id="suppliersTableBody">
                         <tr>
-                            <td colspan="5" style="text-align:center">جاري التحميل...</td>
+                            <td colspan="6" style="text-align:center">جاري التحميل...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -62,6 +63,12 @@
                     <label class="form-label">العنوان</label>
                     <input type="text" id="sAddress" class="form-control">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">الفرع (اختياري)</label>
+                    <select id="sBranch" class="form-control">
+                        <option value="">لا يوجد فرع</option>
+                    </select>
+                </div>
 
                 <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
                     <button type="button" onclick="closeModal()" class="btn btn-outline">إلغاء</button>
@@ -74,7 +81,21 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', loadSuppliers);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSuppliers();
+            loadBranches();
+        });
+
+        async function loadBranches() {
+            try {
+                const branches = await Api.getBranches();
+                const sel = document.getElementById('sBranch');
+                sel.innerHTML = '<option value="">لا يوجد فرع</option>';
+                branches.forEach(b => {
+                    sel.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                });
+            } catch (e) { console.error(e); }
+        }
 
         async function loadSuppliers() {
             try {
@@ -83,19 +104,21 @@
                 tbody.innerHTML = '';
 
                 if (suppliers.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">لا يوجد موردين</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">لا يوجد موردين</td></tr>';
                     return;
                 }
 
                 suppliers.forEach(s => {
+                    const branchName = s.branch ? s.branch.name : '-';
                     const row = `
                         <tr>
                             <td>${s.name}</td>
                             <td>${s.phone || '-'}</td>
                             <td>${s.email || '-'}</td>
                             <td>${s.address || '-'}</td>
+                            <td>${branchName}</td>
                             <td>
-                                <button onclick="editSupplier(${s.id}, '${s.name}', '${s.phone || ''}', '${s.email || ''}', '${s.address || ''}')" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>
+                                <button onclick="editSupplier(${s.id}, '${s.name}', '${s.phone || ''}', '${s.email || ''}', '${s.address || ''}', '${s.branchId || ''}')" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>
                                 <button onclick="deleteSupplier(${s.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">حذف</button>
                             </td>
                         </tr>
@@ -130,7 +153,8 @@
                 name: document.getElementById('sName').value,
                 phone: document.getElementById('sPhone').value,
                 email: document.getElementById('sEmail').value,
-                address: document.getElementById('sAddress').value
+                address: document.getElementById('sAddress').value,
+                branchId: document.getElementById('sBranch').value
             };
 
             try {
@@ -146,7 +170,7 @@
             }
         });
 
-        window.editSupplier = (id, name, phone, email, address) => {
+        window.editSupplier = (id, name, phone, email, address, branchId) => {
             modal.style.display = 'flex';
             document.getElementById('modalTitle').innerText = 'تعديل مورد';
             document.getElementById('supplierId').value = id;
@@ -154,6 +178,7 @@
             document.getElementById('sPhone').value = phone;
             document.getElementById('sEmail').value = email;
             document.getElementById('sAddress').value = address;
+            document.getElementById('sBranch').value = branchId;
         };
 
         window.deleteSupplier = async (id) => {

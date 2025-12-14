@@ -31,6 +31,7 @@ app.use('/api/vouchers', voucherRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/branches', require('./routes/branches.routes'));
 app.use('/api/maintenance', maintenanceRoutes);
 
 // Catch-all for frontend (Single Page Application behavior if needed, or just redirect)

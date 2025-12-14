@@ -108,14 +108,22 @@
         let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
         window.vouchersData = [];
 
-        // Hide add button for normal USER
-        if (currentUser.role === 'USER') {
-            document.getElementById('addBtn').style.display = 'none';
-        }
+        // Show add button for all
+        // if (currentUser.role === 'USER') {
+        //     document.getElementById('addBtn').style.display = 'none';
+        // }
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSuppliers();
             loadVouchers();
+
+            // Auto open modal if requested
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'new') {
+                // Wait slightly for suppliers to load? 
+                // loadSuppliers is async (nvm, openModal handles empty select, suppliers fill in background)
+                setTimeout(() => openModal(), 500);
+            }
         });
 
         async function loadSuppliers() {
@@ -149,18 +157,16 @@
                 }
 
                 res.data.forEach(v => {
-                    const row = document.createElement('tr');
-
-                    let actions = '';
+                    // Only show actions if allowed
+                    let actionsHtml = '';
                     if (currentUser.role === 'ADMIN' || currentUser.role === 'ACCOUNTANT') {
-                        actions += `<button onclick="editVoucher(${v.id})" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">تعديل</button>`;
+                        actionsHtml += `<button onclick="editVoucher(${v.id})" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>`;
                     }
                     if (currentUser.role === 'ADMIN') {
-                        actions += `<button onclick="deleteVoucher(${v.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">حذف</button>`;
+                        actionsHtml += ` <button onclick="deleteVoucher(${v.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">حذف</button>`;
                     }
-                    // Print button for all
-                    actions += `<button onclick="printVoucher('${v.voucherNo}', '${v.date}', '${v.supplier}', '${v.amount}', '${v.paymentMethod}', '${v.description || ''}', '${v.createdBy.fullName}')" class="btn btn-primary" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">طباعة</button>`;
 
+                    const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${v.voucherNo}</td>
                         <td>${new Date(v.date).toLocaleDateString('ar-EG')}</td>

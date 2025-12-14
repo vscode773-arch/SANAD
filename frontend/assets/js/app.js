@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <a href="/vouchers.html" class="nav-link">السندات</a>
                 <a href="/suppliers.html" class="nav-link">الموردين</a>
                 <a href="/reports.html" class="nav-link">التقارير</a>
+                <a href="/branches.html" class="nav-link" id="navBranches" style="display:none">الفروع</a>
                 <a href="/users.html" class="nav-link" id="navUsers" style="display:none">المستخدمين</a>
                 <a href="/settings.html" class="nav-link" id="navSettings" style="display:none">الإعدادات</a>
             </div>
@@ -57,6 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (navUsers) navUsers.style.display = 'block';
         const navSettings = document.getElementById('navSettings');
         if (navSettings) navSettings.style.display = 'block';
+        const navBranches = document.getElementById('navBranches');
+        if (navBranches) navBranches.style.display = 'block';
     }
 });
 

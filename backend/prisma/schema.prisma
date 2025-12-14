@@ -15,6 +15,10 @@ model User {
   role      String   @default("USER") // ADMIN, ACCOUNTANT, USER
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  branchId  Int?
+
   vouchers  Voucher[]
   logs      AuditLog[]
 }
@@ -26,7 +30,21 @@ model Supplier {
   email     String?
   address   String?
   createdAt DateTime @default(now())
+  
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  branchId  Int?
+
   vouchers  Voucher[]
+}
+
+model Branch {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  location  String?
+  createdAt DateTime @default(now())
+  
+  users     User[]
+  suppliers Supplier[]
 }
 
 model Voucher {
