@@ -1,9 +1,11 @@
 // Setup Navbar
 document.addEventListener('DOMContentLoaded', () => {
     const navHTML = `
-    <nav class="navbar">
-        <div class="container navbar-content">
-            <a href="/" class="logo">السند برو</a>
+        <div class="container navbar-content" id="navContainer">
+            <div class="nav-header">
+                <a href="/" class="logo">السند برو</a>
+                <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+            </div>
             <div class="nav-links">
                 <a href="/index.html" class="nav-link">الرئيسية</a>
                 <a href="/vouchers.html" class="nav-link">السندات</a>
@@ -12,13 +14,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 <a href="/users.html" class="nav-link" id="navUsers" style="display:none">المستخدمين</a>
                 <a href="/settings.html" class="nav-link" id="navSettings" style="display:none">الإعدادات</a>
             </div>
-            <div style="display: flex; gap: 1rem; align-items: center;">
+            <div class="nav-user-area" style="display: flex; gap: 1rem; align-items: center;">
                 <span id="userDisplay" style="font-weight: 500;"></span>
                 <button onclick="logout()" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">خروج</button>
             </div>
         </div>
     </nav>
     `;
+
+    window.toggleMenu = () => {
+        const container = document.getElementById('navContainer');
+        container.classList.toggle('active');
+        const links = container.querySelector('.nav-links');
+        links.classList.toggle('active');
+        // also toggle user area? CSS handles it via .nav-container.active .nav-user-area
+    };
 
     // Inject at start of body
     document.body.insertAdjacentHTML('afterbegin', navHTML);
