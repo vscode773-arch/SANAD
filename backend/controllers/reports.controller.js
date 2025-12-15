@@ -55,6 +55,16 @@ exports.getSummaryReport = async (req, res, next) => {
             where.branchId = parseInt(branchId);
         }
 
+        // PERMISSION CHECK: VISIBILITY
+        const userPerms = req.user.permissions ? JSON.parse(req.user.permissions) : [];
+        const canViewAll = req.user.role === 'ADMIN' ||
+            req.user.role === 'ACCOUNTANT' ||
+            userPerms.includes('view_all_data');
+
+        if (!canViewAll) {
+            where.createdById = req.user.id;
+        }
+
         const totalAmount = await prisma.voucher.aggregate({
             _sum: { amount: true },
             where

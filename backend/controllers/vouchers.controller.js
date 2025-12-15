@@ -80,6 +80,17 @@ exports.getVouchers = async (req, res, next) => {
             where.branchId = parseInt(branchId);
         }
 
+        // PERMISSION CHECK: VISIBILITY
+        // If NOT Admin AND NOT Accountant AND DOES NOT have 'view_all_data' permission
+        const userPerms = req.user.permissions ? JSON.parse(req.user.permissions) : [];
+        const canViewAll = req.user.role === 'ADMIN' ||
+            req.user.role === 'ACCOUNTANT' ||
+            userPerms.includes('view_all_data');
+
+        if (!canViewAll) {
+            where.createdById = req.user.id;
+        }
+
         const skip = (page - 1) * limit;
 
         const [vouchers, total] = await Promise.all([
