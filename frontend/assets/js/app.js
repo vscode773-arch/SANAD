@@ -1,5 +1,6 @@
 // Setup Navbar
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Inject Navbar IMMEDIATELY (Before anything else)
     const navHTML = `
     <nav class="navbar">
         <div class="container navbar-content" id="navContainer">
@@ -24,19 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     </nav>
     `;
-
-    window.toggleMenu = () => {
-        const container = document.getElementById('navContainer');
-        container.classList.toggle('active');
-        const links = container.querySelector('.nav-links');
-        links.classList.toggle('active');
-        // also toggle user area? CSS handles it via .nav-container.active .nav-user-area
-    };
-
-    // Inject at start of body
     document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-    // Set Active Link
+    // 2. Set Active Link
     const path = window.location.pathname;
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.getAttribute('href') === path || (path === '/' && link.getAttribute('href') === '/index.html')) {
@@ -44,27 +35,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Check Auth
+    window.toggleMenu = () => {
+        const container = document.getElementById('navContainer');
+        container.classList.toggle('active');
+    };
+
+    // 3. Check Auth (Safe check)
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = '/login.html';
+        // Only redirect if NOT on login page
+        if (!window.location.href.includes('login.html')) {
+            window.location.href = '/login.html';
+        }
+        return; // Stop here if no token (UI is already rendered)
     }
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.fullName) {
-        document.getElementById('userDisplay').innerText = user.fullName;
-    }
+    try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.fullName) {
+            document.getElementById('userDisplay').innerText = user.fullName;
+        }
 
-    if (user.role === 'ADMIN') {
-        const navUsers = document.getElementById('navUsers');
-        if (navUsers) navUsers.style.display = 'block';
-        const navSettings = document.getElementById('navSettings');
-        if (navSettings) navSettings.style.display = 'block';
-        const navBranches = document.getElementById('navBranches');
-        if (navBranches) navBranches.style.display = 'block';
-    }
+        // Show Admin/Accountant Links
+        const perms = user.permissions ? JSON.parse(user.permissions) : [];
+        if (user.role === 'ADMIN') {
+            ['navUsers', 'navSettings', 'navBranches'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'block';
+            });
+        }
+        // Example: if user has 'manage_users' perm
+        if (perms.includes('manage_users')) {
+            const el = document.getElementById('navUsers');
+            if (el) el.style.display = 'block';
+        }
 
-    initNotifications();
+        // 4. Init Notifications (Safe Mode)
+        setTimeout(initNotifications, 2000); // Delay slightly to not block render
+    } catch (e) {
+        console.error('Auth setup error:', e);
+        // Don't alert here, just log
+    }
 });
 
 // Notification System
