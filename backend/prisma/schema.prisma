@@ -46,6 +46,7 @@ model Branch {
   
   users     User[]
   suppliers Supplier[]
+  vouchers  Voucher[]
 }
 
 model Voucher {
