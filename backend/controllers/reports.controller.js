@@ -3,16 +3,16 @@ const prisma = require('../utils/prisma');
 exports.getRecentActivities = async (req, res, next) => {
     try {
         const { since } = req.query; // Timestamp
-        const dateFilter = since ? { createdAt: { gt: new Date(since) } } : {};
+        // const dateFilter = since ? { createdAt: { gt: new Date(since) } } : {}; // Original line, now integrated into where clause
 
         const logs = await prisma.auditLog.findMany({
             where: {
-                ...dateFilter,
+                ...(since ? { timestamp: { gt: new Date(since) } } : {}), // Correct field name, handles optional 'since'
                 // Exclude actions by the current user (don't notify me about myself)
-                userId: { not: req.user.id }
+                NOT: { userId: req.user.id }
             },
             include: { user: { select: { username: true } } },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { timestamp: 'desc' },
             take: 10
         });
 
