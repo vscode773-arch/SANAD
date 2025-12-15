@@ -32,6 +32,12 @@
                         <label class="form-label">إلى تاريخ</label>
                         <input type="date" id="repEnd" class="form-control">
                     </div>
+                    <div id="branchFilterDiv" style="display:none;">
+                        <label class="form-label">الفرع</label>
+                        <select id="repBranch" class="form-control" style="min-width: 120px;">
+                            <option value="">كل الفروع</option>
+                        </select>
+                    </div>
                     <button onclick="loadSummary()" class="btn btn-primary">عرض التقرير</button>
                     <button onclick="window.print()" class="btn btn-outline">طباعة</button>
                 </div>
@@ -92,9 +98,24 @@
     <script src="assets/js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.role === 'ADMIN' || (user.permissions && user.permissions.includes('manage_branches'))) {
+                loadBranches();
+            }
             loadSummary(); // Load default
             loadAudit();
         });
+
+        async function loadBranches() {
+            try {
+                const branches = await Api.getBranches();
+                const sel = document.getElementById('repBranch');
+                document.getElementById('branchFilterDiv').style.display = 'block';
+                branches.forEach(b => {
+                    sel.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                });
+            } catch (e) { console.error(e); }
+        }
 
         function showSection(sec) {
             document.getElementById('section-summary').style.display = sec === 'summary' ? 'block' : 'none';
@@ -107,9 +128,10 @@
         async function loadSummary() {
             const start = document.getElementById('repStart').value;
             const end = document.getElementById('repEnd').value;
+            const branchId = document.getElementById('repBranch').value;
 
             try {
-                const data = await Api.getSummary({ startDate: start, endDate: end });
+                const data = await Api.getSummary({ startDate: start, endDate: end, branchId });
                 document.getElementById('repAmount').innerText = parseFloat(data.totalAmount).toLocaleString() + ' ر.س';
                 document.getElementById('repCount').innerText = data.transactionCount;
 

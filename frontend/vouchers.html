@@ -24,6 +24,9 @@
             <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
                 <input type="text" id="filterSupplier" placeholder="ابحث باسم المورد" class="form-control"
                     style="max-width: 200px;">
+                <select id="filterBranch" class="form-control" style="max-width: 150px; display:none;">
+                    <option value="">كل الفروع</option>
+                </select>
                 <input type="date" id="filterStart" class="form-control" style="max-width: 150px;">
                 <input type="date" id="filterEnd" class="form-control" style="max-width: 150px;">
                 <button onclick="loadVouchers()" class="btn btn-outline">بحث</button>
@@ -36,6 +39,7 @@
                             <th>رقم السند</th>
                             <th>التاريخ</th>
                             <th>المورد</th>
+                            <th>الفرع</th> <!-- New Col -->
                             <th>المبلغ</th>
                             <th>طريقة الدفع</th>
                             <th>بواسطة</th>
@@ -115,16 +119,28 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSuppliers();
+            if(currentUser.role === 'ADMIN' || (currentUser.permissions && currentUser.permissions.includes('manage_branches'))) {
+                loadBranches();
+            }
             loadVouchers();
 
             // Auto open modal if requested
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('action') === 'new') {
-                // Wait slightly for suppliers to load? 
-                // loadSuppliers is async (nvm, openModal handles empty select, suppliers fill in background)
                 setTimeout(() => openModal(), 500);
             }
         });
+
+        async function loadBranches() {
+            try {
+                const branches = await Api.getBranches();
+                const sel = document.getElementById('filterBranch');
+                sel.style.display = 'block';
+                branches.forEach(b => {
+                    sel.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+                });
+            } catch(e) { console.error(e); }
+        }
 
         async function loadSuppliers() {
             try {
@@ -140,19 +156,20 @@
 
         async function loadVouchers(page = 1) {
             const supplier = document.getElementById('filterSupplier').value;
+            const branchId = document.getElementById('filterBranch').value;
             const startDate = document.getElementById('filterStart').value;
             const endDate = document.getElementById('filterEnd').value;
 
             const tbody = document.getElementById('voucherTableBody');
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">جاري التحميل...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">جاري التحميل...</td></tr>';
 
             try {
-                const res = await Api.getVouchers({ page, supplier, startDate, endDate });
+                const res = await Api.getVouchers({ page, supplier, startDate, endDate, branchId });
                 window.vouchersData = res.data;
                 tbody.innerHTML = '';
 
                 if (res.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">لا توجد بيانات</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center">لا توجد بيانات</td></tr>';
                     return;
                 }
 
@@ -174,10 +191,13 @@
                     }
 
                     const row = document.createElement('tr');
+                    const branchName = v.branch ? v.branch.name : '-';
+                    
                     row.innerHTML = `
                         <td>${v.voucherNo}</td>
                         <td>${new Date(v.date).toLocaleDateString('ar-EG')}</td>
                         <td>${v.supplier || v.supplierName || '-'}</td>
+                        <td>${branchName}</td>
                         <td style="font-weight:bold; color: var(--primary);">${parseFloat(v.amount).toLocaleString()}</td>
                         <td>${v.paymentMethod}</td>
                         <td>${v.createdBy ? v.createdBy.fullName : '-'}</td>
@@ -293,7 +313,7 @@
             // Recommending window.print() on a new tab for best Arabic support without heavy font loading.
 
             const printWindow = window.open('', '_blank', 'width=800,height=600');
-            
+
             const supplierName = v.supplier || v.supplierName || '-';
             const creatorName = v.createdBy ? v.createdBy.fullName : '-';
 

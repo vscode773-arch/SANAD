@@ -24,6 +24,9 @@ exports.createVoucher = async (req, res, next) => {
         const supplier = await prisma.supplier.findUnique({ where: { id: parseInt(supplierId) } });
         if (!supplier) return res.status(400).json({ message: 'المورد غير صالح' });
 
+        // Fetch user to get branchId (since it might not be in token yet)
+        const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+
         const voucher = await prisma.voucher.create({
             data: {
                 voucherNo,
@@ -33,7 +36,8 @@ exports.createVoucher = async (req, res, next) => {
                 amount,
                 paymentMethod,
                 description,
-                createdById: req.user.id
+                createdById: req.user.id,
+                branchId: user.branchId // Link to user's branch
             }
         });
 
@@ -55,7 +59,7 @@ exports.createVoucher = async (req, res, next) => {
 
 exports.getVouchers = async (req, res, next) => {
     try {
-        const { startDate, endDate, supplier, page = 1, limit = 50 } = req.query;
+        const { startDate, endDate, supplier, branchId, page = 1, limit = 50 } = req.query;
         const where = {};
 
         if (startDate && endDate) {
@@ -71,6 +75,11 @@ exports.getVouchers = async (req, res, next) => {
             ];
         }
 
+        // Branch Filter
+        if (branchId) {
+            where.branchId = parseInt(branchId);
+        }
+
         const skip = (page - 1) * limit;
 
         const [vouchers, total] = await Promise.all([
@@ -79,8 +88,9 @@ exports.getVouchers = async (req, res, next) => {
                 skip: parseInt(skip),
                 take: parseInt(limit),
                 include: {
-                    createdBy: { select: { fullName: true } },
-                    supplier: { select: { name: true } }
+                    createdBy: { select: { fullName: true, username: true } },
+                    supplier: { select: { name: true } },
+                    branch: { select: { name: true } }
                 },
                 orderBy: { date: 'desc' }
             }),

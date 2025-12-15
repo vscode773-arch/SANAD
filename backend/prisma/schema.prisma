@@ -65,6 +65,9 @@ model Voucher {
   createdBy   User     @relation(fields: [createdById], references: [id])
   createdById Int
   updatedAt   DateTime @updatedAt
+  
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  branchId    Int?
 }
 
 model AuditLog {

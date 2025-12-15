@@ -37,7 +37,7 @@ exports.getAuditLogs = async (req, res, next) => {
 
 exports.getSummaryReport = async (req, res, next) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { startDate, endDate, branchId } = req.query;
         // Aggregation logic
         // Total vouchers, Total Amount
         // Group by Supplier ?
@@ -48,6 +48,11 @@ exports.getSummaryReport = async (req, res, next) => {
                 gte: new Date(startDate),
                 lte: new Date(endDate)
             };
+        }
+
+        // Filter by Branch
+        if (branchId) {
+            where.branchId = parseInt(branchId);
         }
 
         const totalAmount = await prisma.voucher.aggregate({
