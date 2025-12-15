@@ -34,12 +34,23 @@ class Api {
             }
 
             const data = await res.json();
+
+            // Check for 403 with invalid token message
+            if (res.status === 403 && (data.message && data.message.includes('منتهي الصلاحية'))) {
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+                return;
+            }
+
             if (!res.ok) {
                 throw new Error(data.message || 'Error occurred');
             }
             return data;
         } catch (error) {
             console.error(error);
+            // Don't alert if we are just redirecting
+            if (window.location.href.includes('login.html')) return;
+
             alert(error.message);
             throw error;
         }
