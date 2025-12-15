@@ -61,7 +61,54 @@ document.addEventListener('DOMContentLoaded', () => {
         const navBranches = document.getElementById('navBranches');
         if (navBranches) navBranches.style.display = 'block';
     }
+
+    initNotifications();
 });
+
+// Notification System
+let lastCheckTime = new Date().toISOString();
+
+function initNotifications() {
+    if (!("Notification" in window)) return;
+
+    // Request permission if default
+    if (Notification.permission === "default") {
+        // Maybe better to ask on a button click, but let's try auto for now
+        Notification.requestPermission();
+    }
+
+    // Start polling every minute
+    setInterval(checkForNotifications, 60000);
+}
+
+async function checkForNotifications() {
+    if (Notification.permission !== "granted") return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const activities = await Api.getRecentActivities(lastCheckTime);
+        if (activities && activities.length > 0) {
+            // Update last check to the newest log time
+            if (activities[0]) lastCheckTime = activities[0].createdAt; // Assuming desc order
+
+            activities.forEach(log => {
+                let msg = '';
+                if (log.action === 'CREATE' && log.entity === 'Voucher') msg = `تم إضافة سند جديد بواسطة ${log.user?.username}`;
+                if (log.action === 'UPDATE' && log.entity === 'Voucher') msg = `تم تعديل سند بواسطة ${log.user?.username}`;
+
+                if (msg) {
+                    new Notification("تنبيه سندات", {
+                        body: msg,
+                        // icon: '/assets/icon.png' 
+                    });
+                }
+            });
+        }
+    } catch (e) {
+        console.error("Notification check failed", e);
+    }
+}
 
 function logout() {
     localStorage.removeItem('token');

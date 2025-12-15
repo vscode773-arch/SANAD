@@ -79,6 +79,10 @@ class Api {
         return this.request(`/reports/summary?${query}`);
     }
 
+    static getRecentActivities(since) {
+        return this.request(`/reports/notifications?since=${since}`);
+    }
+
     // Suppliers
     static getSuppliers() {
         return this.request('/suppliers');

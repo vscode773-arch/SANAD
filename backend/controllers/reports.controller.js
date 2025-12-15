@@ -1,5 +1,27 @@
 const prisma = require('../utils/prisma');
 
+exports.getRecentActivities = async (req, res, next) => {
+    try {
+        const { since } = req.query; // Timestamp
+        const dateFilter = since ? { createdAt: { gt: new Date(since) } } : {};
+
+        const logs = await prisma.auditLog.findMany({
+            where: {
+                ...dateFilter,
+                // Exclude actions by the current user (don't notify me about myself)
+                userId: { not: req.user.id }
+            },
+            include: { user: { select: { username: true } } },
+            orderBy: { createdAt: 'desc' },
+            take: 10
+        });
+
+        res.json(logs);
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.getAuditLogs = async (req, res, next) => {
     try {
         const logs = await prisma.auditLog.findMany({
