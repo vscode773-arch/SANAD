@@ -177,15 +177,16 @@
                     row.innerHTML = `
                         <td>${v.voucherNo}</td>
                         <td>${new Date(v.date).toLocaleDateString('ar-EG')}</td>
-                        <td>${v.supplier ? v.supplier.name : (v.supplierName || '-')}</td>
+                        <td>${v.supplier || v.supplierName || '-'}</td>
                         <td style="font-weight:bold; color: var(--primary);">${parseFloat(v.amount).toLocaleString()}</td>
                         <td>${v.paymentMethod}</td>
-                        <td>${v.createdBy ? v.createdBy.username : '-'}</td>
+                        <td>${v.createdBy ? v.createdBy.fullName : '-'}</td>
                         <td>
                             ${actionsHtml}
-                            <button onclick="printVoucher(${JSON.stringify(v).replace(/"/g, '&quot;')})" class="btn btn-primary" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">طباعة</button>
+                            <button onclick='printVoucher(${JSON.stringify(v).replace(/'/g, "&#39;")})' class="btn btn-primary" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">طباعة</button>
                         </td>
-                    `; tbody.appendChild(row);
+                    `;
+                    tbody.appendChild(row);
                 });
 
                 // Simple Pagination
@@ -266,18 +267,6 @@
             document.getElementById('vDate').value = new Date(voucher.date).toISOString().split('T')[0];
 
             // Set Supplier Select
-            // We need supplier ID. 
-            // The backend list returns `supplier` name string (transformed). 
-            // Oh, I need supplierId in the list response to bind it.
-            // Backend `getVouchers` logic: `supplier: v.supplier ? v.supplier.name : v.supplierName`
-            // It mapped over the object. I should have kept `supplierId` or `supplier` object.
-            // Let's assume I can't easily get ID if I didn't send it. 
-            // I should update backend `getVouchers` to include `supplierId`.
-            // Wait, `prisma` returns `supplierId` by default in the root object if it's a field.
-            // Yes, `supplierId` is a field. 
-            // But my map: `return { ...v, supplier: ... }` preserves `supplierId`.
-            // So `voucher.supplierId` should be available.
-
             document.getElementById('vSupplier').value = voucher.supplierId || '';
 
             document.getElementById('vAmount').value = voucher.amount;
@@ -295,19 +284,23 @@
             }
         };
 
-        window.printVoucher = (no, date, supplier, amount, method, desc, user) => {
+        window.printVoucher = (v) => {
             // Using jsPDF to generate a clean Voucher
-            const { jsPDF } = window.jspdf;
+            // const { jsPDF } = window.jspdf;
 
             // Note: jsPDF default font doesn't support Arabic.
             // We need to use html to canvas or a font.
             // Recommending window.print() on a new tab for best Arabic support without heavy font loading.
 
             const printWindow = window.open('', '_blank', 'width=800,height=600');
+            
+            const supplierName = v.supplier || v.supplierName || '-';
+            const creatorName = v.createdBy ? v.createdBy.fullName : '-';
+
             printWindow.document.write(`
                 <html dir="rtl" lang="ar">
                 <head>
-                    <title>سند صرف ${no}</title>
+                    <title>سند صرف ${v.voucherNo}</title>
                     <style>
                         body { font-family: 'Tajawal', sans-serif; padding: 2rem; direction: rtl; }
                         .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 1rem; margin-bottom: 2rem; }
@@ -326,27 +319,27 @@
                     </div>
                     
                     <div style="display: flex; justify-content: space-between;">
-                        <div><strong>رقم السند:</strong> ${no}</div>
-                        <div><strong>التاريخ:</strong> ${new Date(date).toLocaleDateString('ar-EG')}</div>
+                        <div><strong>رقم السند:</strong> ${v.voucherNo}</div>
+                        <div><strong>التاريخ:</strong> ${new Date(v.date).toLocaleDateString('ar-EG')}</div>
                     </div>
                     
                     <div class="amount-box">
-                        ${parseFloat(amount).toLocaleString()} ريال
+                        ${parseFloat(v.amount).toLocaleString()} ريال
                     </div>
                     
                     <div class="row">
                         <span class="label">إلى السادة / </span>
-                        <span class="value">${supplier}</span>
+                        <span class="value">${supplierName}</span>
                     </div>
                     
                     <div class="row">
                         <span class="label">وذلك عن / </span>
-                        <span class="value">${desc}</span>
+                        <span class="value">${v.description || ''}</span>
                     </div>
                     
                     <div class="row">
                         <span class="label">طريقة الدفع / </span>
-                        <span class="value">${methodAr(method)}</span>
+                        <span class="value">${methodAr(v.paymentMethod)}</span>
                     </div>
                     
                     <div class="footer">
@@ -358,7 +351,7 @@
                         <div>
                             <p>المحاسب</p>
                             <br>
-                            ${user}
+                            ${creatorName}
                         </div>
                         <div>
                             <p>المدير</p>
