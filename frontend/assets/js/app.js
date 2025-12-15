@@ -1,6 +1,7 @@
 // Setup Navbar
 document.addEventListener('DOMContentLoaded', () => {
     const navHTML = `
+    <nav class="navbar">
         <div class="container navbar-content" id="navContainer">
             <div class="nav-header">
                 <a href="/" class="logo">السند برو</a>
