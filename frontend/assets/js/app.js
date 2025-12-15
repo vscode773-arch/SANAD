@@ -103,7 +103,7 @@ async function checkForNotifications() {
         const activities = await Api.getRecentActivities(lastCheckTime);
         if (activities && activities.length > 0) {
             // Update last check to the newest log time
-            if (activities[0]) lastCheckTime = activities[0].createdAt; // Assuming desc order
+            if (activities[0]) lastCheckTime = activities[0].timestamp; // Assuming desc order
 
             activities.forEach(log => {
                 let msg = '';

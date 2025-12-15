@@ -7,7 +7,7 @@ exports.getRecentActivities = async (req, res, next) => {
 
         const logs = await prisma.auditLog.findMany({
             where: {
-                ...(since ? { timestamp: { gt: new Date(since) } } : {}), // Correct field name, handles optional 'since'
+                ...(since && since !== 'undefined' && !isNaN(new Date(since).getTime()) ? { timestamp: { gt: new Date(since) } } : {}),
                 // Exclude actions by the current user (don't notify me about myself)
                 NOT: { userId: req.user.id }
             },
