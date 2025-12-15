@@ -159,10 +159,17 @@
                 res.data.forEach(v => {
                     // Only show actions if allowed
                     let actionsHtml = '';
-                    if (currentUser.role === 'ADMIN' || currentUser.role === 'ACCOUNTANT') {
+                    const perms = currentUser.permissions ? JSON.parse(currentUser.permissions) : [];
+
+                    // Allow edit/delete if ADMIN or has specfic permission
+                    // Check granular permissions (or ADMIN fallback)
+                    const canEdit = currentUser.role === 'ADMIN' || perms.includes('edit_voucher');
+                    const canDelete = currentUser.role === 'ADMIN' || perms.includes('delete_voucher');
+
+                    if (canEdit) {
                         actionsHtml += `<button onclick="editVoucher(${v.id})" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>`;
                     }
-                    if (currentUser.role === 'ADMIN') {
+                    if (canDelete) {
                         actionsHtml += ` <button onclick="deleteVoucher(${v.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">حذف</button>`;
                     }
 
@@ -170,15 +177,15 @@
                     row.innerHTML = `
                         <td>${v.voucherNo}</td>
                         <td>${new Date(v.date).toLocaleDateString('ar-EG')}</td>
-                        <td>${v.supplier}</td>
+                        <td>${v.supplier ? v.supplier.name : (v.supplierName || '-')}</td>
                         <td style="font-weight:bold; color: var(--primary);">${parseFloat(v.amount).toLocaleString()}</td>
-                        <td>${methodAr(v.paymentMethod)}</td>
-                        <td>${v.createdBy.fullName}</td>
+                        <td>${v.paymentMethod}</td>
+                        <td>${v.createdBy ? v.createdBy.username : '-'}</td>
                         <td>
-                            ${actions}
+                            ${actionsHtml}
+                            <button onclick="printVoucher(${JSON.stringify(v).replace(/"/g, '&quot;')})" class="btn btn-primary" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">طباعة</button>
                         </td>
-                    `;
-                    tbody.appendChild(row);
+                    `; tbody.appendChild(row);
                 });
 
                 // Simple Pagination

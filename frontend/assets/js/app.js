@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <a href="/settings.html" class="nav-link" id="navSettings" style="display:none">الإعدادات</a>
             </div>
             <div class="nav-user-area" style="display: flex; gap: 1rem; align-items: center;">
+                <button onclick="requestNotifyPermission()" title="تفعيل الإشعارات" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">🔔</button>
                 <span id="userDisplay" style="font-weight: 500;"></span>
                 <button onclick="logout()" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">خروج</button>
             </div>
@@ -110,8 +111,24 @@ async function checkForNotifications() {
     }
 }
 
+window.requestNotifyPermission = () => {
+    if (!("Notification" in window)) {
+        alert("المتصفح لا يدعم الإشعارات");
+        return;
+    }
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+            alert("تم تفعيل الإشعارات بنجاح");
+            checkForNotifications(); // Check immediately
+        } else {
+            alert("تم رفض الإذن للإشعارات");
+        }
+    });
+};
+
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/login.html';
 }
+```
