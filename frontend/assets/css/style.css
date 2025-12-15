@@ -302,8 +302,12 @@ th {
     }
 
     /* When menu is active, show everything */
-    .nav-container.active .nav-links,
-    .nav-container.active .nav-user-area {
+    #navContainer.active .nav-links,
+    #navContainer.active .nav-user-area {
         display: flex;
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+        gap: 1rem;
     }
 }
