@@ -13,6 +13,7 @@ model User {
   password  String
   fullName  String
   role      String   @default("USER") // ADMIN, ACCOUNTANT, USER
+  permissions String @default("[]") // JSON String of specific permissions e.g. ["create_voucher", "view_reports"]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   

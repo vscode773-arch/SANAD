@@ -6,9 +6,9 @@ const { authorize } = require('../middlewares/role.middleware');
 
 router.use(authenticate);
 
-// Only ADMIN can manage branches
-router.get('/', branchesController.getBranches); // Users might need to see branches? Maybe restrict manage to admin.
-router.post('/', authorize(['ADMIN']), branchesController.createBranch);
-router.delete('/:id', authorize(['ADMIN']), branchesController.deleteBranch);
+// Only ADMIN or manage_branches permission can manage
+router.get('/', branchesController.getBranches);
+router.post('/', authorize([], 'manage_branches'), branchesController.createBranch);
+router.delete('/:id', authorize([], 'manage_branches'), branchesController.deleteBranch);
 
 module.exports = router;

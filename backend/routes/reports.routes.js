@@ -7,7 +7,7 @@ const { authorize } = require('../middlewares/role.middleware');
 router.use(authenticate);
 
 // Reports only for Admin/Accountant usually
-router.get('/audit-logs', authorize(['ADMIN']), reportsController.getAuditLogs);
-router.get('/summary', authorize(['ADMIN', 'ACCOUNTANT']), reportsController.getSummaryReport);
+router.get('/audit-logs', authorize([], 'view_reports'), reportsController.getAuditLogs);
+router.get('/summary', authorize([], 'view_reports'), reportsController.getSummaryReport);
 
 module.exports = router;

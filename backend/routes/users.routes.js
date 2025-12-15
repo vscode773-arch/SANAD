@@ -5,7 +5,7 @@ const { authenticate } = require('../middlewares/auth.middleware');
 const { authorize } = require('../middlewares/role.middleware');
 
 router.use(authenticate);
-router.use(authorize(['ADMIN'])); // All user routes are admin only
+router.use(authorize([], 'manage_users')); // Requires manage_users permission
 
 router.get('/', usersController.getUsers);
 router.post('/', usersController.createUser);

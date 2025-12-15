@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 exports.getUsers = async (req, res, next) => {
     try {
         const users = await prisma.user.findMany({
-            select: { id: true, username: true, fullName: true, role: true, createdAt: true, branch: true }
+            select: { id: true, username: true, fullName: true, role: true, permissions: true, createdAt: true, branch: true }
         });
         res.json(users);
     } catch (error) {
@@ -14,7 +14,7 @@ exports.getUsers = async (req, res, next) => {
 
 exports.createUser = async (req, res, next) => {
     try {
-        const { username, password, fullName, role, branchId } = req.body;
+        const { username, password, fullName, role, branchId, permissions } = req.body;
 
         // Validation handled somewhat by frontend, strict here
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -25,6 +25,7 @@ exports.createUser = async (req, res, next) => {
                 password: hashedPassword,
                 fullName,
                 role: role || 'USER',
+                permissions: permissions ? JSON.stringify(permissions) : '[]',
                 branchId: branchId ? parseInt(branchId) : null
             }
         });
@@ -49,11 +50,12 @@ exports.createUser = async (req, res, next) => {
 exports.updateUser = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { fullName, role, password, branchId } = req.body;
+        const { fullName, role, password, branchId, permissions } = req.body;
 
         const data = {
             fullName, role,
-            branchId: branchId ? parseInt(branchId) : null
+            branchId: branchId ? parseInt(branchId) : null,
+            permissions: permissions ? JSON.stringify(permissions) : undefined
         };
         if (password) {
             data.password = await bcrypt.hash(password, 10);

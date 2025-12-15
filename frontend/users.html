@@ -75,6 +75,20 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label">الصلاحيات الإضافية</label>
+                    <div
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+                        <label><input type="checkbox" name="perms" value="create_voucher"> إضافة سند</label>
+                        <label><input type="checkbox" name="perms" value="edit_voucher"> تعديل سند</label>
+                        <label><input type="checkbox" name="perms" value="delete_voucher"> حذف سند</label>
+                        <label><input type="checkbox" name="perms" value="view_reports"> عرض التقارير</label>
+                        <label><input type="checkbox" name="perms" value="manage_users"> إدارة المستخدمين</label>
+                        <label><input type="checkbox" name="perms" value="manage_suppliers"> إدارة الموردين</label>
+                        <label><input type="checkbox" name="perms" value="manage_branches"> إدارة الفروع</label>
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
                     <button type="button" onclick="closeModal()" class="btn btn-outline">إلغاء</button>
                     <button type="submit" class="btn btn-primary">حفظ</button>
@@ -110,6 +124,9 @@
 
                 users.forEach(u => {
                     const branchName = u.branch ? u.branch.name : '-';
+                    // Escape single quotes in permissions string for the onclick handler
+                    const permsString = u.permissions ? u.permissions.replace(/'/g, "\\'") : '[]';
+
                     const row = `
                         <tr>
                             <td>${u.fullName}</td>
@@ -117,7 +134,7 @@
                             <td>${roleAr(u.role)}</td>
                             <td>${branchName}</td>
                             <td>
-                                <button onclick="editUser(${u.id}, '${u.fullName}', '${u.username}', '${u.role}', '${u.branchId || ''}')" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>
+                                <button onclick="editUser(${u.id}, '${u.fullName}', '${u.username}', '${u.role}', '${u.branchId || ''}', '${permsString}')" class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">تعديل</button>
                                 <button onclick="deleteUser(${u.id})" class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size: 0.8rem;">حذف</button>
                             </td>
                         </tr>
@@ -143,6 +160,8 @@
             form.reset();
             document.getElementById('userId').value = '';
             document.getElementById('uUsername').disabled = false;
+            // Uncheck all permissions
+            document.querySelectorAll('input[name="perms"]').forEach(el => el.checked = false);
         }
 
         function closeModal() {
@@ -159,11 +178,16 @@
             // Validate password on create
             if (!id && !password) return alert('كلمة المرور مطلوبة');
 
+            // Collect permissions
+            const perms = [];
+            document.querySelectorAll('input[name="perms"]:checked').forEach(el => perms.push(el.value));
+
             const data = {
                 fullName: document.getElementById('uFullname').value,
                 username: document.getElementById('uUsername').value,
                 role: document.getElementById('uRole').value,
                 branchId: document.getElementById('uBranch').value,
+                permissions: perms,
                 password: password || undefined
             };
 
@@ -180,7 +204,7 @@
             }
         });
 
-        window.editUser = (id, fullname, username, role, branchId) => {
+        window.editUser = (id, fullname, username, role, branchId, permissionsStr) => {
             modal.style.display = 'flex';
             document.getElementById('modalTitle').innerText = 'تعديل مستخدم';
             document.getElementById('userId').value = id;
@@ -190,6 +214,12 @@
             document.getElementById('uRole').value = role;
             document.getElementById('uBranch').value = branchId;
             document.getElementById('uPassword').value = '';
+
+            // Set permissions
+            const perms = JSON.parse(permissionsStr || '[]');
+            document.querySelectorAll('input[name="perms"]').forEach(el => {
+                el.checked = perms.includes(el.value);
+            });
         };
 
         window.deleteUser = async (id) => {

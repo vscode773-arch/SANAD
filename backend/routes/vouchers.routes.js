@@ -9,10 +9,10 @@ router.use(authenticate);
 // Everyone can create, read. Only ADMIN/ACCOUNTANT can update? Or just ADMIN?
 // Let's say everyone can create.
 router.get('/', voucherController.getVouchers);
-router.post('/', voucherController.createVoucher);
+router.post('/', authorize([], 'create_voucher'), voucherController.createVoucher);
 
 // Update/Delete restricted
-router.put('/:id', authorize(['ADMIN', 'ACCOUNTANT']), voucherController.updateVoucher);
-router.delete('/:id', authorize(['ADMIN']), voucherController.deleteVoucher);
+router.put('/:id', authorize([], 'edit_voucher'), voucherController.updateVoucher);
+router.delete('/:id', authorize([], 'delete_voucher'), voucherController.deleteVoucher);
 
 module.exports = router;
