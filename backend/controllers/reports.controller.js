@@ -3,7 +3,7 @@ const prisma = require('../utils/prisma');
 exports.getRecentActivities = async (req, res, next) => {
     try {
         const { since } = req.query; // Timestamp
-        // const dateFilter = since ? { createdAt: { gt: new Date(since) } } : {}; // Original line, now integrated into where clause
+        // FORCE DEPLOY: Ensure timestamp field is used
 
         const logs = await prisma.auditLog.findMany({
             where: {
