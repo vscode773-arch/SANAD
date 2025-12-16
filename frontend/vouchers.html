@@ -73,13 +73,17 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">المورد</label>
-                    <div style="display:flex; gap:0.5rem">
-                        <select id="vSupplier" class="form-control" required>
-                            <option value="">ختر مورد...</option>
-                        </select>
-                        <button type="button" onclick="window.location.href='/suppliers.html'" class="btn btn-outline"
-                            style="font-size:0.8rem">إدارة</button>
+                    <div style="position: relative; width: 100%;">
+                        <input type="text" id="vSupplierSearch" class="form-control" placeholder="ابحث واختر المورد..."
+                            autocomplete="off">
+                        <input type="hidden" id="vSupplier">
+                        <div id="supplierDropdownList" class="dropdown-list"
+                            style="display:none; position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 100;">
+                            <!-- Items will be injected here -->
+                        </div>
                     </div>
+                    <button type="button" onclick="window.location.href='/suppliers.html'" class="btn btn-outline"
+                        style="font-size:0.8rem">إدارة</button>
                 </div>
                 <div class="form-group">
                     <label class="form-label">المبلغ</label>
@@ -119,7 +123,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSuppliers();
-            if(currentUser.role === 'ADMIN' || (currentUser.permissions && currentUser.permissions.includes('manage_branches'))) {
+            if (currentUser.role === 'ADMIN' || (currentUser.permissions && currentUser.permissions.includes('manage_branches'))) {
                 loadBranches();
             }
             loadVouchers();
@@ -139,20 +143,72 @@
                 branches.forEach(b => {
                     sel.innerHTML += `<option value="${b.id}">${b.name}</option>`;
                 });
-            } catch(e) { console.error(e); }
+            } catch (e) { console.error(e); }
         }
+
+        let allSuppliers = [];
 
         async function loadSuppliers() {
             try {
-                const suppliers = await Api.getSuppliers();
-                const sel = document.getElementById('vSupplier');
-                // Keep first option
-                sel.innerHTML = '<option value="">اختر مورد...</option>';
-                suppliers.forEach(s => {
-                    sel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-                });
+                allSuppliers = await Api.getSuppliers();
+                renderSupplierDropdown(allSuppliers);
             } catch (e) { console.error(e); }
         }
+
+        function renderSupplierDropdown(list) {
+            const dropdown = document.getElementById('supplierDropdownList');
+            dropdown.innerHTML = '';
+
+            if (list.length === 0) {
+                dropdown.innerHTML = '<div style="padding:0.5rem; text-align:center; color:var(--text-light)">لا يوجد نتائج</div>';
+                return;
+            }
+
+            list.forEach(s => {
+                const item = document.createElement('div');
+                item.style.padding = '0.75rem';
+                item.style.cursor = 'pointer';
+                item.style.borderBottom = '1px solid var(--border)';
+                item.innerText = s.name;
+                item.onmouseover = () => item.style.background = 'var(--bg-secondary)';
+                item.onmouseout = () => item.style.background = 'transparent';
+
+                item.onclick = () => {
+                    document.getElementById('vSupplier').value = s.id;
+                    document.getElementById('vSupplierSearch').value = s.name;
+                    dropdown.style.display = 'none';
+                };
+                dropdown.appendChild(item);
+            });
+        }
+
+        // Setup Search Listener
+        const searchInput = document.getElementById('vSupplierSearch');
+        const dropdownList = document.getElementById('supplierDropdownList');
+
+        searchInput.addEventListener('focus', () => {
+            dropdownList.style.display = 'block';
+            renderSupplierDropdown(allSuppliers); // Show all on focus
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allSuppliers.filter(s => s.name.toLowerCase().includes(val));
+            renderSupplierDropdown(filtered);
+            dropdownList.style.display = 'block';
+
+            // Clear ID if text changes to something not matching exactly (though we want them to select from list)
+            // Ideally we keep the ID if the name matches, else clear it.
+            // For now, let's clear ID on input to force selection
+            document.getElementById('vSupplier').value = '';
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !dropdownList.contains(e.target)) {
+                dropdownList.style.display = 'none';
+            }
+        });
 
         async function loadVouchers(page = 1) {
             const supplier = document.getElementById('filterSupplier').value;
@@ -192,7 +248,7 @@
 
                     const row = document.createElement('tr');
                     const branchName = v.branch ? v.branch.name : '-';
-                    
+
                     row.innerHTML = `
                         <td>${v.voucherNo}</td>
                         <td>${new Date(v.date).toLocaleDateString('ar-EG')}</td>
@@ -239,6 +295,9 @@
                 form.reset();
                 document.getElementById('voucherId').value = '';
                 document.getElementById('vDate').valueAsDate = new Date(); // Default today
+                // Clear searchable inputs
+                document.getElementById('vSupplier').value = '';
+                document.getElementById('vSupplierSearch').value = '';
             }
         }
 
@@ -261,6 +320,11 @@
                 paymentMethod: document.getElementById('vMethod').value,
                 description: document.getElementById('vDesc').value
             };
+
+            if (!data.supplierId) {
+                alert('الرجاء اختيار مورد من القائمة');
+                return;
+            }
 
             try {
                 if (id) {
@@ -288,6 +352,8 @@
 
             // Set Supplier Select
             document.getElementById('vSupplier').value = voucher.supplierId || '';
+            const supName = voucher.supplier || voucher.supplierName || '';
+            document.getElementById('vSupplierSearch').value = supName;
 
             document.getElementById('vAmount').value = voucher.amount;
             document.getElementById('vMethod').value = voucher.paymentMethod;
