@@ -15,7 +15,7 @@ async function generateVoucherNo() {
     return `V-${year}-${String(count + 1).padStart(4, '0')}`;
 }
 
-const notificationService = require('../services/oneSignal.service');
+// const notificationService = require('../services/oneSignal.service'); // TEMPORARILY DISABLED
 
 exports.createVoucher = async (req, res, next) => {
     try {
@@ -55,9 +55,9 @@ exports.createVoucher = async (req, res, next) => {
 
         // Send Push Notification
         // We do this asynchronously without awaiting, so we don't block the response
-        const notifTitle = "سند صرف جديد";
-        const notifMsg = `تم إنشاء سند رقم ${voucherNo} بقيمة ${amount} للمورد ${supplier.name} بواسطة ${user.fullName}`;
-        notificationService.sendNotificationToAdmins(notifTitle, notifMsg);
+        // const notifTitle = "سند صرف جديد";
+        // const notifMsg = `تم إنشاء سند رقم ${voucherNo} بقيمة ${amount} للمورد ${supplier.name} بواسطة ${user.fullName}`;
+        // notificationService.sendNotificationToAdmins(notifTitle, notifMsg);
 
         res.status(201).json(voucher);
     } catch (error) {
