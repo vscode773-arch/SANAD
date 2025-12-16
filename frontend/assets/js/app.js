@@ -78,67 +78,64 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Notification System
-let lastCheckTime = new Date().toISOString();
+// Notification System - Now using OneSignal
+const OneSignal = window.OneSignal || [];
 
 function initNotifications() {
-    if (!("Notification" in window)) return;
-
-    // Request permission if default
-    if (Notification.permission === "default") {
-        // Maybe better to ask on a button click, but let's try auto for now
-        Notification.requestPermission();
+    // Inject OneSignal SDK if not already present
+    if (!document.getElementById('onesignal-sdk')) {
+        const script = document.createElement('script');
+        script.id = 'onesignal-sdk';
+        script.src = "https://cdn.onesignal.com/sdks/OneSignalSDK.js";
+        script.async = true;
+        document.head.appendChild(script);
     }
 
-    // Start polling every minute
-    setInterval(checkForNotifications, 60000);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    OneSignal.push(function () {
+        OneSignal.init({
+            appId: "650ff893-4616-4af8-b668-fe272cc9374c", // BILL PRO App ID
+            safari_web_id: "", // Optional
+            notifyButton: {
+                enable: false, // We use custom button
+            },
+            allowLocalhostAsSecureOrigin: true, // For testing
+        });
+
+        // Tag the user for segmentation (e.g. Send only to ADMINs)
+        if (user.role) {
+            OneSignal.sendTag("role", user.role);
+            OneSignal.sendTag("username", user.username);
+        }
+
+        // Check subscription status
+        // OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+        //     if (!isEnabled) console.log("Push notifications are not enabled yet.");
+        // });
+    });
 }
 
+// We don't need checkForNotifications polling anymore! 
+// But we keep the function name if it's called somewhere, but empty it
 async function checkForNotifications() {
-    if (Notification.permission !== "granted") return;
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    try {
-        const activities = await Api.getRecentActivities(lastCheckTime);
-        if (activities && activities.length > 0) {
-            // Update last check to the newest log time
-            if (activities[0]) lastCheckTime = activities[0].timestamp; // Assuming desc order
-
-            activities.forEach(log => {
-                let msg = '';
-                if (log.action === 'CREATE' && log.entity === 'Voucher') msg = `تم إضافة سند جديد بواسطة ${log.user?.username}`;
-                if (log.action === 'UPDATE' && log.entity === 'Voucher') msg = `تم تعديل سند بواسطة ${log.user?.username}`;
-
-                if (msg) {
-                    new Notification("تنبيه سندات", {
-                        body: msg,
-                        // icon: '/assets/icon.png' 
-                    });
-                }
-            });
-        }
-    } catch (e) {
-        console.error("Notification check failed", e);
-    }
+    // Legacy polling removed in favor of Push
 }
 
 window.requestNotifyPermission = () => {
-    if (!("Notification" in window)) {
-        alert("المتصفح لا يدعم الإشعارات");
-        return;
-    }
-    Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
-            alert("تم تفعيل الإشعارات بنجاح");
-            checkForNotifications(); // Check immediately
-        } else {
-            alert("تم رفض الإذن للإشعارات");
-        }
+    // Use OneSignal's native prompt
+    OneSignal.push(function () {
+        OneSignal.showNativePrompt();
     });
 };
 
 function logout() {
+    // Remove tags on logout
+    OneSignal.push(function () {
+        OneSignal.deleteTag("role");
+        OneSignal.deleteTag("username");
+    });
+
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/login.html';
