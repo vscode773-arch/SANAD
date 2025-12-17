@@ -16,7 +16,15 @@ const app = express();
 
 // Middlewares
 app.use(helmet({
-    contentSecurityPolicy: false, // For easier dev with inline scripts/styles if needed, tighten in prod
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.onesignal.com", "https://onesignal.com"],
+            connectSrc: ["'self'", "https://onesignal.com", "https://api.onesignal.com"],
+            frameSrc: ["'self'", "https://onesignal.com"],
+            imgSrc: ["'self'", "data:", "https://*"],
+        },
+    },
 }));
 app.use(cors());
 app.use(express.json());
