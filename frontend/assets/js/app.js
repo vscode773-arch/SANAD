@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Notification System - Now using OneSignal
-const OneSignal = window.OneSignal = window.OneSignal || [];
+const OneSignal = window.OneSignal || [];
 
 function initNotifications() {
     // Inject OneSignal SDK if not already present
@@ -93,8 +93,9 @@ function initNotifications() {
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    OneSignal.push(function () {
-        OneSignal.init({
+    window.OneSignal = window.OneSignal || [];
+    window.OneSignal.push(function () {
+        window.OneSignal.init({
             appId: "650ff893-4616-4af8-b668-fe272cc9374c", // BILL PRO App ID (Force Refresh)
             safari_web_id: "", // Optional
             notifyButton: {
@@ -129,18 +130,19 @@ window.requestNotifyPermission = () => {
         return;
     }
     // Use OneSignal's native prompt
-    OneSignal.push(function () {
+    window.OneSignal = window.OneSignal || [];
+    window.OneSignal.push(function () {
         // Check if already subscribed
-        OneSignal.isPushNotificationsEnabled(function (isEnabled) {
+        window.OneSignal.isPushNotificationsEnabled(function (isEnabled) {
             if (isEnabled) {
                 alert("notifications are already enabled!");
                 // Re-send tags just in case
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (user.role) OneSignal.sendTag("role", user.role);
+                if (user.role) window.OneSignal.sendTag("role", user.role);
             } else {
                 // Trigger prompt
-                OneSignal.showNativePrompt();
-                OneSignal.registerForPushNotifications(); // Alternative trigger
+                window.OneSignal.showNativePrompt();
+                window.OneSignal.registerForPushNotifications(); // Alternative trigger
             }
         });
     });
