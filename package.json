@@ -1,6 +1,6 @@
 {
     "name": "sanad-pro",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "description": "Professional Payment Voucher Management System",
     "main": "backend/server.js",
     "scripts": {

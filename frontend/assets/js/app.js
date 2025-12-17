@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Notification System - Now using OneSignal
-const OneSignal = window.OneSignal || [];
+window.OneSignal = window.OneSignal || [];
 
 function initNotifications() {
     // Inject OneSignal SDK if not already present
