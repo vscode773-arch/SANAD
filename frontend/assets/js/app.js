@@ -123,9 +123,26 @@ async function checkForNotifications() {
 }
 
 window.requestNotifyPermission = () => {
+    // Debug: Check if OneSignal is loaded
+    if (!window.OneSignal) {
+        alert("OneSignal SDK not loaded yet. Please wait.");
+        return;
+    }
     // Use OneSignal's native prompt
     OneSignal.push(function () {
-        OneSignal.showNativePrompt();
+        // Check if already subscribed
+        OneSignal.isPushNotificationsEnabled(function (isEnabled) {
+            if (isEnabled) {
+                alert("notifications are already enabled!");
+                // Re-send tags just in case
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (user.role) OneSignal.sendTag("role", user.role);
+            } else {
+                // Trigger prompt
+                OneSignal.showNativePrompt();
+                OneSignal.registerForPushNotifications(); // Alternative trigger
+            }
+        });
     });
 };
 
