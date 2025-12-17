@@ -102,6 +102,7 @@ function initNotifications() {
                 enable: false, // We use custom button
             },
             allowLocalhostAsSecureOrigin: true, // For testing
+            path: '/'
         });
 
         // Tag the user for segmentation (e.g. Send only to ADMINs)
