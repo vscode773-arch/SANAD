@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Notification System - Now using OneSignal
-const OneSignal = window.OneSignal || [];
+const OneSignal = window.OneSignal = window.OneSignal || [];
 
 function initNotifications() {
     // Inject OneSignal SDK if not already present
@@ -95,7 +95,7 @@ function initNotifications() {
 
     OneSignal.push(function () {
         OneSignal.init({
-            appId: "650ff893-4616-4af8-b668-fe272cc9374c", // BILL PRO App ID
+            appId: "650ff893-4616-4af8-b668-fe272cc9374c", // BILL PRO App ID (Force Refresh)
             safari_web_id: "", // Optional
             notifyButton: {
                 enable: false, // We use custom button
