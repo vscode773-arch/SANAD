@@ -1,2 +1,2 @@
-This file exists solely to trigger a fresh deployment on Render.
-Timestamp: 2025-12-17T19:30:00+03:00
+Service Worker Fix - Final
+Timestamp: 2025-12-17T21:50:00+03:00
