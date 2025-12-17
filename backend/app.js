@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
+// const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
@@ -14,10 +14,9 @@ const { errorHandler } = require('./middlewares/error.middleware');
 
 const app = express();
 
-// Middlewares
-app.use(helmet({
-    contentSecurityPolicy: false,
-}));
+// app.use(helmet({
+//    contentSecurityPolicy: false,
+// }));
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
