@@ -98,8 +98,7 @@ function initNotifications() {
         window.OneSignal.init({
             appId: "650ff893-4616-4af8-b668-fe272cc9374c", // BILL PRO App ID (Force Refresh)
             safari_web_id: "", // Optional
-            workerPath: "OneSignalSDKWorker_v2.js",
-            workerParam: { scope: "/" },
+            // workerPath: "OneSignalSDKWorker.js", // Default is fine now
             notifyButton: {
                 enable: false, // We use custom button
             },
@@ -122,41 +121,14 @@ function initNotifications() {
     });
 }
 
-// Dedicated function to update tags
+// Dedicated function to update tags (SIMPLIFIED)
 function updateUserTags(user) {
     if (!user || !user.role) return;
 
     OneSignal.sendTag("role", user.role);
     OneSignal.sendTag("username", user.username);
 
-    // ROBUST LOGIC:
-    // 1. If user is ADMIN, they ALWAYS get notifications (Safety net).
-    // 2. OR if they have the specific permission.
-
-    let shouldNotify = false;
-
-    // Check if Admin
-    if (user.role === 'ADMIN') {
-        shouldNotify = true;
-    } else {
-        // Check permissions safely
-        try {
-            const perms = user.permissions ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions) : [];
-            if (perms.includes('receive_notifications')) {
-                shouldNotify = true;
-            }
-        } catch (e) {
-            console.error("Error parsing permissions:", e);
-        }
-    }
-
-    if (shouldNotify) {
-        OneSignal.sendTag("notify", "true");
-        console.log("🔔 Notification Tag SENT (Reason: Admin or Permission)");
-    } else {
-        OneSignal.deleteTag("notify");
-        console.log("🔕 Notification Tag DELETED");
-    }
+    // Permission logic removed as requested - relying on Backend "Send to All"
 }
 
 // We don't need checkForNotifications polling anymore! 
