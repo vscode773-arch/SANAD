@@ -124,21 +124,36 @@ function initNotifications() {
 function updateUserTags(user) {
     if (!user || !user.role) return;
 
-    // Must be inside OneSignal.push to ensure SDK is ready, but initNotifications already wraps it. 
-    // However, if called externally, we should verify.
-    // Here it's called from inside init's push callback.
-
     OneSignal.sendTag("role", user.role);
     OneSignal.sendTag("username", user.username);
 
-    const perms = user.permissions ? JSON.parse(user.permissions) : [];
+    // ROBUST LOGIC:
+    // 1. If user is ADMIN, they ALWAYS get notifications (Safety net).
+    // 2. OR if they have the specific permission.
 
-    if (perms.includes('receive_notifications')) {
+    let shouldNotify = false;
+
+    // Check if Admin
+    if (user.role === 'ADMIN') {
+        shouldNotify = true;
+    } else {
+        // Check permissions safely
+        try {
+            const perms = user.permissions ? (typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions) : [];
+            if (perms.includes('receive_notifications')) {
+                shouldNotify = true;
+            }
+        } catch (e) {
+            console.error("Error parsing permissions:", e);
+        }
+    }
+
+    if (shouldNotify) {
         OneSignal.sendTag("notify", "true");
-        // console.log("🔔 Tags SENT: notify=true");
+        console.log("🔔 Notification Tag SENT (Reason: Admin or Permission)");
     } else {
         OneSignal.deleteTag("notify");
-        // console.log("🔕 Tags DELETED: notify");
+        console.log("🔕 Notification Tag DELETED");
     }
 }
 
