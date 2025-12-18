@@ -56,6 +56,34 @@
             }
         });
     </script>
+    <div id="os-debug"
+        style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; p: 10px; font-size: 10px; z-index: 9999; direction: ltr; max-height: 100px; overflow: auto;">
+        Debug: Initializing...
+    </div>
+
+    <script>
+        // Temporary OneSignal Debugger
+        setTimeout(() => {
+            const dbg = document.getElementById('os-debug');
+            if (window.OneSignal) {
+                window.OneSignal.push(async () => {
+                    const id = await OneSignal.getUserId();
+                    const state = await OneSignal.isPushNotificationsEnabled();
+                    const tags = await OneSignal.getTags(); // This might need external API in some versions but trying local
+
+                    dbg.innerHTML = `
+                   <strong>OneSignal Diagnostics:</strong><br>
+                   ID: ${id || 'Not Assigned'}<br>
+                   Enabled: ${state}<br>
+                   Tags: ${JSON.stringify(tags) || 'Cannot Read'}<br>
+                   Local User: ${localStorage.getItem('user') ? 'Found' : 'Missing'}
+                   `;
+                });
+            } else {
+                dbg.innerHTML = "OneSignal Library NOT Loaded!";
+            }
+        }, 5000);
+    </script>
 </body>
 
 </html>
