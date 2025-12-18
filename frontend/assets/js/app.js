@@ -110,7 +110,12 @@ function initNotifications() {
             OneSignal.sendTag("role", user.role);
             OneSignal.sendTag("username", user.username);
 
-            const perms = user.permissions ? JSON.parse(user.permissions) : [];
+            const permsRaw = user.permissions;
+            console.log("DEBUG: Raw Permissions:", permsRaw, "Type:", typeof permsRaw);
+
+            const perms = permsRaw ? (typeof permsRaw === 'string' ? JSON.parse(permsRaw) : permsRaw) : [];
+            console.log("DEBUG: Parsed Permissions:", perms);
+
             if (perms.includes('receive_notifications')) {
                 OneSignal.sendTag("notify", "true");
                 console.log("🔔 Notifications ENABLED for this user");
