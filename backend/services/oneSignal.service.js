@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const ONESIGNAL_APP_ID = '650ff893-4616-4af8-b668-fe272cc9374c';
-const ONESIGNAL_API_KEY = process.env.ONESIGNAL_API_KEY || 'PUT_YOUR_REST_API_KEY_HERE'; // <--- هنا ستضع المفتاح
+const ONESIGNAL_API_KEY = process.env.ONESIGNAL_API_KEY || 'fxwiuj3wnuzn4mmpyst7byizi';
 
 exports.sendNotificationToAdmins = async (title, message) => {
     try {
