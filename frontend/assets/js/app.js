@@ -105,31 +105,38 @@ function initNotifications() {
 
         });
 
-        // Tag the user for segmentation based on permissions
-        if (user.role) {
-            OneSignal.sendTag("role", user.role);
-            OneSignal.sendTag("username", user.username);
-
-            const permsRaw = user.permissions;
-            console.log("DEBUG: Raw Permissions:", permsRaw, "Type:", typeof permsRaw);
-
-            const perms = permsRaw ? (typeof permsRaw === 'string' ? JSON.parse(permsRaw) : permsRaw) : [];
-            console.log("DEBUG: Parsed Permissions:", perms);
-
-            if (perms.includes('receive_notifications')) {
-                OneSignal.sendTag("notify", "true");
-                console.log("🔔 Notifications ENABLED for this user");
-            } else {
-                OneSignal.deleteTag("notify");
-                console.log("🔕 Notifications DISABLED for this user");
-            }
-        }
+        // Trigger tag update
+        OneSignal.push(function () {
+            updateUserTags(user);
+        });
 
         // Check subscription status
         // OneSignal.isPushNotificationsEnabled(function(isEnabled) {
         //     if (!isEnabled) console.log("Push notifications are not enabled yet.");
         // });
     });
+}
+
+// Dedicated function to update tags
+function updateUserTags(user) {
+    if (!user || !user.role) return;
+
+    // Must be inside OneSignal.push to ensure SDK is ready, but initNotifications already wraps it. 
+    // However, if called externally, we should verify.
+    // Here it's called from inside init's push callback.
+
+    OneSignal.sendTag("role", user.role);
+    OneSignal.sendTag("username", user.username);
+
+    const perms = user.permissions ? JSON.parse(user.permissions) : [];
+
+    if (perms.includes('receive_notifications')) {
+        OneSignal.sendTag("notify", "true");
+        // console.log("🔔 Tags SENT: notify=true");
+    } else {
+        OneSignal.deleteTag("notify");
+        // console.log("🔕 Tags DELETED: notify");
+    }
 }
 
 // We don't need checkForNotifications polling anymore! 
@@ -153,11 +160,11 @@ window.requestNotifyPermission = () => {
                 alert("notifications are already enabled!");
                 // Re-send tags just in case
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (user.role) window.OneSignal.sendTag("role", user.role);
+                updateUserTags(user); // Force update tags
             } else {
                 // Trigger prompt
                 window.OneSignal.showNativePrompt();
-                window.OneSignal.registerForPushNotifications(); // Alternative trigger
+                window.OneSignal.registerForPushNotifications();
             }
         });
     });
@@ -175,4 +182,3 @@ function logout() {
     localStorage.removeItem('user');
     window.location.href = '/login.html';
 }
-
