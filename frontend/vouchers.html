@@ -248,10 +248,14 @@
 
                     const row = document.createElement('tr');
                     const branchName = v.branch ? v.branch.name : '-';
+                    // Use createdAt for exact time if available, else date (fallback)
+                    const timeObj = v.createdAt ? new Date(v.createdAt) : new Date(v.date);
+                    const timeStr = timeObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                    const dateStr = new Date(v.date).toLocaleDateString('ar-EG');
 
                     row.innerHTML = `
                         <td>${v.voucherNo}</td>
-                        <td>${new Date(v.date).toLocaleDateString('ar-EG')}</td>
+                        <td dir="ltr" style="text-align:right">${dateStr} <span style="color:#666; font-size:0.8em; margin-right:5px;">${timeStr}</span></td>
                         <td>${v.supplier || v.supplierName || '-'}</td>
                         <td>${branchName}</td>
                         <td style="font-weight:bold; color: var(--primary);">${parseFloat(v.amount).toLocaleString()}</td>
@@ -383,6 +387,11 @@
             const supplierName = v.supplier || v.supplierName || '-';
             const creatorName = v.createdBy ? v.createdBy.fullName : '-';
 
+            // Format time for print
+            const timeObj = v.createdAt ? new Date(v.createdAt) : new Date();
+            const timeStr = timeObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = new Date(v.date).toLocaleDateString('ar-EG');
+
             printWindow.document.write(`
                 <html dir="rtl" lang="ar">
                 <head>
@@ -406,7 +415,7 @@
                     
                     <div style="display: flex; justify-content: space-between;">
                         <div><strong>رقم السند:</strong> ${v.voucherNo}</div>
-                        <div><strong>التاريخ:</strong> ${new Date(v.date).toLocaleDateString('ar-EG')}</div>
+                        <div><strong>التاريخ:</strong> ${dateStr} - ${timeStr}</div>
                     </div>
                     
                     <div class="amount-box">
