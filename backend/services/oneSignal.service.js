@@ -11,11 +11,10 @@ exports.sendNotificationToAdmins = async (title, message) => {
                 app_id: ONESIGNAL_APP_ID,
                 headings: { "en": title, "ar": title },
                 contents: { "en": message, "ar": message },
-                // TEMPORARY: Send to everyone to test connectivity
-                included_segments: ["Total Subscriptions"],
-                // filters: [
-                //     { field: "tag", key: "role", relation: "=", value: "ADMIN" }
-                // ]
+                // Target users who have the 'notify' tag set to 'true'
+                filters: [
+                    { field: "tag", key: "notify", relation: "=", value: "true" }
+                ]
             },
             {
                 headers: {

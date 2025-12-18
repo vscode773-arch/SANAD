@@ -105,10 +105,19 @@ function initNotifications() {
 
         });
 
-        // Tag the user for segmentation (e.g. Send only to ADMINs)
+        // Tag the user for segmentation based on permissions
         if (user.role) {
             OneSignal.sendTag("role", user.role);
             OneSignal.sendTag("username", user.username);
+
+            const perms = user.permissions ? JSON.parse(user.permissions) : [];
+            if (perms.includes('receive_notifications')) {
+                OneSignal.sendTag("notify", "true");
+                console.log("🔔 Notifications ENABLED for this user");
+            } else {
+                OneSignal.deleteTag("notify");
+                console.log("🔕 Notifications DISABLED for this user");
+            }
         }
 
         // Check subscription status
