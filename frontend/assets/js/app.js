@@ -168,6 +168,7 @@ function logout() {
     OneSignal.push(function () {
         OneSignal.deleteTag("role");
         OneSignal.deleteTag("username");
+        OneSignal.deleteTag("notify");
     });
 
     localStorage.removeItem('token');
