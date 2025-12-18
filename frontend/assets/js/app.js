@@ -114,6 +114,9 @@ function initNotifications() {
         // OneSignal.isPushNotificationsEnabled(function(isEnabled) {
         //     if (!isEnabled) console.log("Push notifications are not enabled yet.");
         // });
+
+        // DEBUG: Force sending a test tag to verify connectivity
+        OneSignal.sendTag("force_test", "true");
     });
 }
 
