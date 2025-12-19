@@ -1,7 +1,8 @@
 const axios = require('axios');
 
-const ONESIGNAL_APP_ID = 'acde8867-8983-478b-8e16-55d6ff644c10'; // NEW APP ID
-const ONESIGNAL_REST_API_KEY = 'os_v2_app_vtpiqz4jqndyxdqwkxlp6zcmcchwcf47tjweemuzhs73qpmh2o4ql3kqkix7f6as64bmuajbb6656fijmamn2rzrecrbd4ynkuizsli'; // NEW v2 KEY
+const ONESIGNAL_APP_ID = 'acde8867-8983-478b-8e16-55d6ff644c10';
+// API Key is now secure and loaded from environment variables
+const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
 
 exports.sendNotificationToAdmins = async (title, message) => {
     console.log('🔔 Attempting to send notification to NEW APP...');
