@@ -3,16 +3,31 @@ const prisma = require('../utils/prisma');
 // Helper to generate voucher number
 async function generateVoucherNo() {
     const year = new Date().getFullYear();
-    const count = await prisma.voucher.count({
+
+    // Find the last voucher created in this year
+    const lastVoucher = await prisma.voucher.findFirst({
         where: {
             date: {
                 gte: new Date(`${year}-01-01`),
                 lt: new Date(`${year + 1}-01-01`),
             },
         },
+        orderBy: {
+            voucherNo: 'desc', // Get the highest number
+        },
     });
+
+    let nextNum = 1;
+    if (lastVoucher && lastVoucher.voucherNo) {
+        // Extract the number part (assumes format V-YYYY-XXXX)
+        const parts = lastVoucher.voucherNo.split('-');
+        if (parts.length === 3) {
+            nextNum = parseInt(parts[2]) + 1;
+        }
+    }
+
     // Format: V-YYYY-0001
-    return `V-${year}-${String(count + 1).padStart(4, '0')}`;
+    return `V-${year}-${String(nextNum).padStart(4, '0')}`;
 }
 
 const notificationService = require('../services/oneSignal.service');
