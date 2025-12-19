@@ -96,11 +96,11 @@ function initNotifications() {
     window.OneSignal = window.OneSignal || [];
     window.OneSignal.push(function () {
         window.OneSignal.init({
-            appId: "650ff893-4616-4af8-b668-fe272cc9374c", // BILL PRO App ID (Force Refresh)
-            safari_web_id: "", // Optional
+            appId: "acde8867-8983-478b-8e16-55d6ff644c10", // NEW APP ID
+            safari_web_id: "web.onesignal.auto.650ff893-4616-4af8-b668-fe272cc9374c", // Keep or update if you have a new Safari ID too
             // workerPath: "OneSignalSDKWorker.js", // Default is fine now
             notifyButton: {
-                enable: false, // We use custom button
+                enable: true,
             },
             allowLocalhostAsSecureOrigin: true, // For testing
 

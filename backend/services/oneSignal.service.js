@@ -1,12 +1,11 @@
 const axios = require('axios');
 
-const ONESIGNAL_APP_ID = '650ff893-4616-4af8-b668-fe272cc9374c';
-const ONESIGNAL_REST_API_KEY = 'os_v2_app_muh7re2gczfprnti7ytszsjxjsg32sl3xmveh343udkirhhrr33pkcifk7uy4kligqjebcbxvabis73jmsbvui2wyyq7ns7igswc52q';
+const ONESIGNAL_APP_ID = 'acde8867-8983-478b-8e16-55d6ff644c10'; // NEW APP ID
+const ONESIGNAL_REST_API_KEY = 'os_v2_app_vtpiqz4jqndyxdqwkxlp6zcmcbcrxiwf42de2ufetn3arlkvqui2npep2iylhxhpdc2q7detib6tukv6qhdf25qwevj3v5smvv7nchi'; // NEW v2 KEY
 
 exports.sendNotificationToAdmins = async (title, message) => {
-    console.log('🔔 Attempting to send notification...');
+    console.log('🔔 Attempting to send notification to NEW APP...');
     console.log('📝 Title:', title);
-    console.log('📝 Message:', message);
 
     try {
         const payload = {
@@ -15,8 +14,6 @@ exports.sendNotificationToAdmins = async (title, message) => {
             contents: { "en": message, "ar": message },
             included_segments: ["Total Subscriptions"]
         };
-
-        console.log('📤 Sending to OneSignal with payload:', JSON.stringify(payload, null, 2));
 
         const response = await axios.post(
             'https://onesignal.com/api/v1/notifications',
