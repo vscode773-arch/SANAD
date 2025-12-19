@@ -82,3 +82,9 @@ model AuditLog {
   userId    Int
   timestamp DateTime @default(now())
 }
+
+model SystemSetting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique // e.g., "NOTIFICATIONS_ENABLED"
+  value String // e.g., "true" or "false"
+}

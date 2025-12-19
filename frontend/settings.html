@@ -17,6 +17,22 @@
             <p style="color: #666;">إدارة إعدادات النظام والنسخ الاحتياطية</p>
         </div>
 
+        <div class="card" style="margin-bottom: 2rem; border-left: 5px solid var(--primary);">
+            <h2>إعدادات النظام العامة</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+                <div>
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">إشعارات السندات الجديدة</h3>
+                    <p style="color: #666; font-size: 0.9rem;">تفعيل أو إيقاف إرسال إشعارات عند إنشاء سند جديد لجميع
+                        المستخدمين.</p>
+                </div>
+                <!-- Toggle Switch -->
+                <label class="switch">
+                    <input type="checkbox" id="notifToggle" onchange="toggleNotifications()">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
         <div class="card">
             <h2>النسخ الاحتياطي لقاعدة البيانات</h2>
             <p style="margin-bottom: 1.5rem; line-height: 1.6;">
@@ -53,6 +69,55 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/app.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+        });
+
+        async function loadSettings() {
+            try {
+                // Fetch Notification Setting
+                const token = Api.token;
+                const res = await fetch('/api/settings/NOTIFICATIONS_ENABLED', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                // If value is 'true' or undefined (default), check the box
+                const isEnabled = data.value !== 'false';
+                document.getElementById('notifToggle').checked = isEnabled;
+
+            } catch (err) {
+                console.error("Failed to load settings:", err);
+            }
+        }
+
+        async function toggleNotifications() {
+            const toggle = document.getElementById('notifToggle');
+            const isEnabled = toggle.checked;
+
+            try {
+                const token = Api.token;
+                const res = await fetch('/api/settings/NOTIFICATIONS_ENABLED', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ value: isEnabled })
+                });
+
+                if (!res.ok) throw new Error("Failed to update");
+
+                // Show toast or slight feedback? 
+                // For now, console log is enough as the switch visually updates.
+                console.log("Notification setting updated:", isEnabled);
+
+            } catch (err) {
+                alert("فشل تحديث الإعداد: " + err.message);
+                toggle.checked = !isEnabled; // Revert on error
+            }
+        }
+
         async function downloadBackup() {
             const btn = document.querySelector('.btn-primary');
             const msg = document.getElementById('msg');
