@@ -16,7 +16,7 @@ exports.sendNotificationToAdmins = async (title, message) => {
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Basic ${ONESIGNAL_API_KEY}`
+                    'Authorization': `Bearer ${ONESIGNAL_API_KEY}`
                 }
             }
         );
