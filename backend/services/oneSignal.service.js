@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const ONESIGNAL_APP_ID = 'acde8867-8983-478b-8e16-55d6ff644c10'; // NEW APP ID
-const ONESIGNAL_REST_API_KEY = 'os_v2_app_vtpiqz4jqndyxdqwkxlp6zcmcbcrxiwf42de2ufetn3arlkvqui2npep2iylhxhpdc2q7detib6tukv6qhdf25qwevj3v5smvv7nchi'; // NEW v2 KEY
+const ONESIGNAL_REST_API_KEY = 'os_v2_app_vtpiqz4jqndyxdqwkxlp6zcmccvu5vlcu6ru5y4puwiiftgc7m6tutgcpzvvykkwv7j4ytcikrj7qk6v4lookrjoaylbotnhqu26j5q'; // NEW v2 KEY
 
 exports.sendNotificationToAdmins = async (title, message) => {
     console.log('🔔 Attempting to send notification to NEW APP...');
