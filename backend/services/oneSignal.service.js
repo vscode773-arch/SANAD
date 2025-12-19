@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const ONESIGNAL_APP_ID = "650ff893-4616-4af8-b668-fe272cc9374c";
-const ONESIGNAL_API_KEY = "fxwiuj3unuzn4mmpyst7byizi"; // Using Key from Screenshot ('u')
+const ONESIGNAL_API_KEY = "os_v2_app_muh7re2gczfprnti7ytszsjxjrn4x55g6osegwefwzrmzhcwq3vbhh7j2figjbrihezyon575ior2hfrhfbszf6feslasoru4vjaija"; // New v2 Key
 
 exports.sendNotificationToAdmins = async (title, message) => {
     try {
