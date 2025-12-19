@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const ONESIGNAL_APP_ID = '650ff893-4616-4af8-b668-fe272cc9374c';
-const ONESIGNAL_REST_API_KEY = 'os_v2_app_fxwiuj3wnuzn4mmpyst7byizi'; // Full REST API Key with prefix
+const ONESIGNAL_REST_API_KEY = 'fxwiuj3unuzn4mmpyst7byizi'; // Full REST API Key
 
 exports.sendNotificationToAdmins = async (title, message) => {
     console.log('🔔 Attempting to send notification...');
