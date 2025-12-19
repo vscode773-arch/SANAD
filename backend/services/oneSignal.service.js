@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const ONESIGNAL_APP_ID = '650ff893-4616-4af8-b668-fe272cc9374c';
-const ONESIGNAL_REST_API_KEY = 'os_v2_app_muh7re2gczfprnti7ytszsjxjsvuh5rw7jlemp4xglqhhrxbd6w3phaeavficolgto7w4zdp4xwnt7552bzrfokpcqildrfyrnusa3a';
+const ONESIGNAL_REST_API_KEY = 'os_v2_app_muh7re2gczfprnti7ytszsjxjsg32sl3xmveh343udkirhhrr33pkcifk7uy4kligqjebcbxvabis73jmsbvui2wyyq7ns7igswc52q';
 
 exports.sendNotificationToAdmins = async (title, message) => {
     console.log('🔔 Attempting to send notification...');
@@ -24,7 +24,7 @@ exports.sendNotificationToAdmins = async (title, message) => {
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Basic ${ONESIGNAL_REST_API_KEY}`
+                    'Authorization': `Bearer ${ONESIGNAL_REST_API_KEY}`
                 }
             }
         );
