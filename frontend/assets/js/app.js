@@ -146,6 +146,10 @@ window.OneSignal.push(function () {
             enable: true,
         },
         allowLocalhostAsSecureOrigin: true,
+        // Force path explicitly for mobile browsers
+        path: "/",
+        serviceWorkerPath: "OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/" }
     });
 
     // Auto-register for push
