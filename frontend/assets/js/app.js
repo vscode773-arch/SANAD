@@ -138,6 +138,14 @@ async function checkForNotifications() {
 }
 
 // Initialize OneSignal
+window.requestNotifyPermission = function () {
+    window.OneSignal.push(function () {
+        window.OneSignal.showSlidedownPrompt({ force: true });
+        // Also try native prompt as backup
+        window.OneSignal.registerForPushNotifications();
+    });
+};
+
 window.OneSignal = window.OneSignal || [];
 window.OneSignal.push(function () {
     window.OneSignal.init({
