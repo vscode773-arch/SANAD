@@ -137,30 +137,36 @@ async function checkForNotifications() {
     // Legacy polling removed in favor of Push
 }
 
-window.requestNotifyPermission = () => {
-    // Debug: Check if OneSignal is loaded
-    if (!window.OneSignal) {
-        alert("OneSignal SDK not loaded yet. Please wait.");
-        return;
-    }
-    // Use OneSignal's native prompt
-    window.OneSignal = window.OneSignal || [];
-    window.OneSignal.push(function () {
-        // Check if already subscribed
-        window.OneSignal.isPushNotificationsEnabled(function (isEnabled) {
-            if (isEnabled) {
-                alert("notifications are already enabled!");
-                // Re-send tags just in case
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                updateUserTags(user); // Force update tags
-            } else {
-                // Trigger prompt
-                window.OneSignal.showNativePrompt();
-                window.OneSignal.registerForPushNotifications();
-            }
-        });
+// Initialize OneSignal
+window.OneSignal = window.OneSignal || [];
+window.OneSignal.push(function () {
+    window.OneSignal.init({
+        appId: "acde8867-8983-478b-8e16-55d6ff644c10",
+        notifyButton: {
+            enable: true,
+        },
+        allowLocalhostAsSecureOrigin: true,
     });
-};
+
+    // Auto-register for push
+    window.OneSignal.on('subscriptionChange', function (isSubscribed) {
+        console.log("The user's subscription state is now:", isSubscribed);
+        if (isSubscribed) {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            updateUserTags(user);
+        }
+    });
+
+    // Attempt to show prompt immediately
+    window.OneSignal.showSlidedownPrompt();
+});
+// Check status on load (optional debugging)
+window.OneSignal.push(function () {
+    window.OneSignal.getUserId(function (userId) {
+        console.log("OneSignal User ID:", userId);
+    });
+});
+});
 
 function logout() {
     // Remove tags on logout
