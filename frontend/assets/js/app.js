@@ -166,7 +166,7 @@ window.OneSignal.push(function () {
         console.log("OneSignal User ID:", userId);
     });
 });
-});
+
 
 function logout() {
     // Remove tags on logout
