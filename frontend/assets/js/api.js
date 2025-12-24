@@ -132,4 +132,15 @@ class Api {
     static deleteBranch(id) {
         return this.request(`/branches/${id}`, 'DELETE');
     }
+
+    // Generic methods for flexibility
+    static get(endpoint) {
+        return this.request(endpoint, 'GET');
+    }
+    static put(endpoint, data) {
+        return this.request(endpoint, 'PUT', data);
+    }
+    static delete(endpoint) {
+        return this.request(endpoint, 'DELETE');
+    }
 }

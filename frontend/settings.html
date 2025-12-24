@@ -18,7 +18,36 @@
             <p style="color: #666;">إدارة إعدادات النظام والنسخ الاحتياطية</p>
         </div>
 
+        <!-- Company Branding Settings -->
         <div class="card">
+            <h2>إعدادات الشركة</h2>
+            <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+                قم بتخصيص اسم الشركة واللوجو الذي سيظهر في السندات المطبوعة
+            </p>
+
+            <div class="form-group">
+                <label class="form-label">اسم الشركة</label>
+                <input type="text" id="companyName" class="form-control" placeholder="أدخل اسم الشركة">
+            </div>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label class="form-label">لوجو الشركة</label>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <input type="file" id="companyLogo" accept="image/*" class="form-control" style="max-width: 300px;">
+                    <button onclick="uploadLogo()" class="btn btn-primary">رفع اللوجو</button>
+                    <button onclick="deleteLogo()" class="btn btn-danger" id="deleteLogoBtn" style="display: none;">حذف
+                        اللوجو</button>
+                </div>
+                <div id="logoPreview" style="margin-top: 1rem;"></div>
+            </div>
+
+            <button onclick="saveCompanySettings()" class="btn btn-primary" style="margin-top: 1.5rem;">
+                حفظ إعدادات الشركة
+            </button>
+            <div id="companyMsg" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
             <h2>النسخ الاحتياطي لقاعدة البيانات</h2>
             <p style="margin-bottom: 1.5rem; line-height: 1.6;">
                 يمكنك تحميل نسخة كاملة من قاعدة البيانات الحالية. <br>
@@ -54,6 +83,115 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/app.js"></script>
     <script>
+        // Load company settings on page load
+        document.addEventListener('DOMContentLoaded', loadCompanySettings);
+
+        async function loadCompanySettings() {
+            try {
+                const settings = await Api.get('/api/company');
+                document.getElementById('companyName').value = settings.companyName || '';
+
+                if (settings.logoPath) {
+                    displayLogoPreview(settings.logoPath);
+                    document.getElementById('deleteLogoBtn').style.display = 'inline-block';
+                }
+            } catch (error) {
+                console.error('Error loading company settings:', error);
+            }
+        }
+
+        function displayLogoPreview(logoPath) {
+            const preview = document.getElementById('logoPreview');
+            preview.innerHTML = `
+                <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 0.5rem; display: inline-block;">
+                    <img src="${logoPath}" alt="Company Logo" style="max-width: 200px; max-height: 100px; display: block;">
+                </div>
+            `;
+        }
+
+        async function saveCompanySettings() {
+            const companyName = document.getElementById('companyName').value.trim();
+            const msg = document.getElementById('companyMsg');
+
+            if (!companyName) {
+                msg.style.color = 'red';
+                msg.innerText = 'الرجاء إدخال اسم الشركة';
+                return;
+            }
+
+            try {
+                await Api.put('/api/company', { companyName });
+                msg.style.color = 'green';
+                msg.innerText = 'تم حفظ اسم الشركة بنجاح';
+                setTimeout(() => msg.innerText = '', 3000);
+            } catch (error) {
+                msg.style.color = 'red';
+                msg.innerText = error.message || 'خطأ في حفظ الإعدادات';
+            }
+        }
+
+        async function uploadLogo() {
+            const fileInput = document.getElementById('companyLogo');
+            const file = fileInput.files[0];
+            const msg = document.getElementById('companyMsg');
+
+            if (!file) {
+                msg.style.color = 'red';
+                msg.innerText = 'الرجاء اختيار صورة أولاً';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('logo', file);
+
+            try {
+                const token = Api.token;
+                const res = await fetch('/api/company/logo', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+
+                msg.style.color = 'green';
+                msg.innerText = 'تم رفع اللوجو بنجاح';
+
+                if (data.settings.logoPath) {
+                    displayLogoPreview(data.settings.logoPath);
+                    document.getElementById('deleteLogoBtn').style.display = 'inline-block';
+                }
+
+                fileInput.value = '';
+                setTimeout(() => msg.innerText = '', 3000);
+            } catch (error) {
+                msg.style.color = 'red';
+                msg.innerText = error.message || 'خطأ في رفع اللوجو';
+            }
+        }
+
+        async function deleteLogo() {
+            if (!confirm('هل أنت متأكد من حذف اللوجو؟')) return;
+
+            const msg = document.getElementById('companyMsg');
+
+            try {
+                await Api.delete('/api/company/logo');
+
+                msg.style.color = 'green';
+                msg.innerText = 'تم حذف اللوجو بنجاح';
+
+                document.getElementById('logoPreview').innerHTML = '';
+                document.getElementById('deleteLogoBtn').style.display = 'none';
+
+                setTimeout(() => msg.innerText = '', 3000);
+            } catch (error) {
+                msg.style.color = 'red';
+                msg.innerText = error.message || 'خطأ في حذف اللوجو';
+            }
+        }
+
         async function downloadBackup() {
             const btn = document.querySelector('.btn-primary');
             const msg = document.getElementById('msg');
