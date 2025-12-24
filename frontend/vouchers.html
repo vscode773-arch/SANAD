@@ -375,32 +375,56 @@
             }
         };
 
-        window.printVoucher = async (v) => {
-            // Load company settings first
-            let companyName = 'BILL PRO';
-            let companyLogo = '';
+        // Initialize global settings
+        window.companySettings = {
+            name: 'BILL PRO',
+            logo: null
+        };
 
+        // Fetch settings on load
+        async function loadSettings() {
             try {
-                const settings = await Api.get('/api/company');
-                companyName = settings.companyName || 'BILL PRO';
-                companyLogo = settings.logoPath || '';
-            } catch (error) {
-                console.log('Using default company settings');
-            }
+                const token = localStorage.getItem('token');
+                if (!token) return;
 
+                const res = await fetch('/api/settings', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.company_name) window.companySettings.name = data.company_name;
+                    if (data.company_logo) window.companySettings.logo = data.company_logo;
+                }
+            } catch (e) { console.error('Failed to load settings', e); }
+        }
+
+        // Add to DOMContentLoaded
+        const originalInit = document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            // ... existing init code (it will run in parallel usually or I can overwrite)
+            // Since I can't overwrite the existing event listener easily without replacing it,
+            // I'll just add this one.
+        });
+
+        // Overwrite printVoucher
+        window.printVoucher = (v) => {
             const printWindow = window.open('', '_blank', 'width=800,height=600');
 
             const supplierName = v.supplier || v.supplierName || '-';
             const creatorName = v.createdBy ? v.createdBy.fullName : '-';
 
-            // Format time for print
+            // Branch
+            const branchName = v.branch ? v.branch.name : '';
+
+            // Format time
             const timeObj = v.createdAt ? new Date(v.createdAt) : new Date();
             const timeStr = timeObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             const dateStr = new Date(v.date).toLocaleDateString('ar-EG');
 
-            // Logo HTML if available
-            const logoHtml = companyLogo
-                ? `<img src="${companyLogo}" alt="${companyName}" style="max-width: 120px; max-height: 80px; margin-bottom: 0.5rem;">`
+            // Header Content
+            const companyName = window.companySettings.name;
+            const logoHtml = window.companySettings.logo
+                ? `<img src="${window.companySettings.logo}" style="height: 80px; margin-bottom: 0.5rem;">`
                 : '';
 
             printWindow.document.write(`
@@ -409,66 +433,78 @@
                     <title>سند صرف ${v.voucherNo}</title>
                     <style>
                         body { font-family: 'Tajawal', sans-serif; padding: 2rem; direction: rtl; }
-                        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 1rem; margin-bottom: 2rem; }
-                        .company-logo { margin-bottom: 0.5rem; }
-                        .company-name { font-size: 1.3rem; font-weight: bold; color: #2563eb; margin-bottom: 0.5rem; }
-                        .row { display: flex; margin-bottom: 1rem; }
-                        .label { font-weight: bold; width: 150px; }
-                        .value { flex: 1; border-bottom: 1px dotted #ccc; }
-                        .amount-box { border: 2px solid #333; padding: 1rem; text-align: center; font-size: 1.5rem; margin: 1rem 0; }
-                        .footer { margin-top: 3rem; display: flex; justify-content: space-between; }
-                        @media print {
-                            body { padding: 1rem; }
-                        }
+                        .header-container { text-align: center; border-bottom: 2px solid #333; padding-bottom: 1rem; margin-bottom: 2rem; position: relative; }
+                        .company-info { font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0; }
+                        .doc-title { margin-top: 1rem; font-size: 2rem; border: 2px solid #000; display: inline-block; padding: 0.5rem 2rem; border-radius: 8px; }
+                        
+                        .row { display: flex; margin-bottom: 1rem; align-items: baseline; }
+                        .label { font-weight: bold; width: 140px; font-size: 1.1rem; }
+                        .value { flex: 1; border-bottom: 1px dotted #ccc; font-size: 1.1rem; padding-bottom: 2px; }
+                        .amount-box { border: 2px solid #333; padding: 0.5rem 2rem; text-align: center; font-size: 1.5rem; margin: 1rem 0; float: left; border-radius: 8px; font-weight: bold; background: #f9f9f9; }
+                        .footer { margin-top: 4rem; display: flex; justify-content: space-between; text-align: center; }
+                        .footer div { min-width: 150px; }
+                        .footer p { font-weight: bold; margin-bottom: 3rem; }
                     </style>
                      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
                 </head>
                 <body>
-                    <div class="header">
+                    <div class="header-container">
                         ${logoHtml}
-                        <div class="company-name">${companyName}</div>
-                        <h1 style="margin: 0.5rem 0;">سند صرف</h1>
-                        <h3 style="margin: 0; color: #666; font-weight: normal;">Payment Voucher</h3>
+                        <div class="company-info">${companyName}</div>
+                        ${branchName ? `<div>فرع: ${branchName}</div>` : ''}
+                        
+                        <div class="doc-title">سند صرف نقدية</div>
                     </div>
                     
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
-                        <div><strong>رقم السند:</strong> ${v.voucherNo}</div>
-                        <div><strong>التاريخ:</strong> ${dateStr} - ${timeStr}</div>
-                    </div>
-                    
-                    <div class="amount-box">
-                        ${parseFloat(v.amount).toLocaleString()} ريال
+                    <div style="overflow: hidden; margin-bottom: 2rem;">
+                         <div style="float: right;">
+                            <div><strong>رقم السند:</strong> ${v.voucherNo}</div>
+                            <div style="margin-top:0.5rem;"><strong>التاريخ:</strong> ${dateStr}</div>
+                         </div>
+                         <div class="amount-box">
+                            ${parseFloat(v.amount).toLocaleString()} ريال
+                         </div>
                     </div>
                     
                     <div class="row">
-                        <span class="label">إلى السادة / </span>
+                        <span class="label">اصرفوا للمكرم/ </span>
                         <span class="value">${supplierName}</span>
                     </div>
                     
                     <div class="row">
-                        <span class="label">وذلك عن / </span>
+                        <span class="label">مبلغاً وقدره/ </span>
+                        <span class="value" id="amountText">...</span>
+                        <script>
+                            // Simple number to text placeholder or function if you have one
+                            // For now, we leave dots or manual
+                        <\/script>
+                    </div>
+
+                    <div class="row">
+                        <span class="label">وذلك مقابل/ </span>
                         <span class="value">${v.description || ''}</span>
                     </div>
                     
                     <div class="row">
-                        <span class="label">طريقة الدفع / </span>
+                        <span class="label">طريقة الدفع/ </span>
                         <span class="value">${methodAr(v.paymentMethod)}</span>
                     </div>
                     
                     <div class="footer">
                         <div>
                             <p>المستلم</p>
-                            <br>
                             ....................
                         </div>
                         <div>
                             <p>المحاسب</p>
-                            <br>
                             ${creatorName}
                         </div>
                         <div>
-                            <p>المدير</p>
-                            <br>
+                            <p>المدير المالي</p>
+                            ....................
+                        </div>
+                        <div>
+                            <p>اعتماد المدير العام</p>
                             ....................
                         </div>
                     </div>

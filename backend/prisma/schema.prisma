@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -83,9 +83,8 @@ model AuditLog {
   timestamp DateTime @default(now())
 }
 
-model CompanySettings {
-  id          Int      @id @default(autoincrement())
-  companyName String   @default("BILL PRO")
-  logoPath    String?
-  updatedAt   DateTime @updatedAt
+model SystemSetting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
 }

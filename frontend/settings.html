@@ -18,36 +18,7 @@
             <p style="color: #666;">إدارة إعدادات النظام والنسخ الاحتياطية</p>
         </div>
 
-        <!-- Company Branding Settings -->
         <div class="card">
-            <h2>إعدادات الشركة</h2>
-            <p style="margin-bottom: 1.5rem; line-height: 1.6;">
-                قم بتخصيص اسم الشركة واللوجو الذي سيظهر في السندات المطبوعة
-            </p>
-
-            <div class="form-group">
-                <label class="form-label">اسم الشركة</label>
-                <input type="text" id="companyName" class="form-control" placeholder="أدخل اسم الشركة">
-            </div>
-
-            <div class="form-group" style="margin-top: 1.5rem;">
-                <label class="form-label">لوجو الشركة</label>
-                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <input type="file" id="companyLogo" accept="image/*" class="form-control" style="max-width: 300px;">
-                    <button onclick="uploadLogo()" class="btn btn-primary">رفع اللوجو</button>
-                    <button onclick="deleteLogo()" class="btn btn-danger" id="deleteLogoBtn" style="display: none;">حذف
-                        اللوجو</button>
-                </div>
-                <div id="logoPreview" style="margin-top: 1rem;"></div>
-            </div>
-
-            <button onclick="saveCompanySettings()" class="btn btn-primary" style="margin-top: 1.5rem;">
-                حفظ إعدادات الشركة
-            </button>
-            <div id="companyMsg" style="margin-top: 1rem;"></div>
-        </div>
-
-        <div class="card" style="margin-top: 2rem;">
             <h2>النسخ الاحتياطي لقاعدة البيانات</h2>
             <p style="margin-bottom: 1.5rem; line-height: 1.6;">
                 يمكنك تحميل نسخة كاملة من قاعدة البيانات الحالية. <br>
@@ -61,6 +32,27 @@
             </button>
 
             <div id="msg" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h2>إعدادات الشركة</h2>
+            <div class="form-group">
+                <label>اسم الشركة</label>
+                <input type="text" id="companyName" class="form-control" placeholder="أدخل اسم الشركة">
+            </div>
+            <div class="form-group">
+                <label>شعار الشركة</label>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                    <img id="logoPreview" src=""
+                        style="width: 80px; height: 80px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; display: none;">
+                    <input type="file" id="companyLogo" accept="image/*" class="form-control">
+                </div>
+                <small style="color: #666; display: block; margin-bottom: 0.5rem;">يفضل استخدام صورة بخلفية شفافة
+                    (PNG)</small>
+                <button onclick="uploadLogo()" class="btn btn-outline" id="btnUpload">رفع الشعار</button>
+            </div>
+            <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #eee;">
+            <button onclick="saveSettings()" class="btn btn-primary">حفظ الإعدادات</button>
         </div>
 
         <div class="card" style="margin-top: 2rem; border: 1px solid #ff9800;">
@@ -83,115 +75,6 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/app.js"></script>
     <script>
-        // Load company settings on page load
-        document.addEventListener('DOMContentLoaded', loadCompanySettings);
-
-        async function loadCompanySettings() {
-            try {
-                const settings = await Api.get('/api/company');
-                document.getElementById('companyName').value = settings.companyName || '';
-
-                if (settings.logoPath) {
-                    displayLogoPreview(settings.logoPath);
-                    document.getElementById('deleteLogoBtn').style.display = 'inline-block';
-                }
-            } catch (error) {
-                console.error('Error loading company settings:', error);
-            }
-        }
-
-        function displayLogoPreview(logoPath) {
-            const preview = document.getElementById('logoPreview');
-            preview.innerHTML = `
-                <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 0.5rem; display: inline-block;">
-                    <img src="${logoPath}" alt="Company Logo" style="max-width: 200px; max-height: 100px; display: block;">
-                </div>
-            `;
-        }
-
-        async function saveCompanySettings() {
-            const companyName = document.getElementById('companyName').value.trim();
-            const msg = document.getElementById('companyMsg');
-
-            if (!companyName) {
-                msg.style.color = 'red';
-                msg.innerText = 'الرجاء إدخال اسم الشركة';
-                return;
-            }
-
-            try {
-                await Api.put('/api/company', { companyName });
-                msg.style.color = 'green';
-                msg.innerText = 'تم حفظ اسم الشركة بنجاح';
-                setTimeout(() => msg.innerText = '', 3000);
-            } catch (error) {
-                msg.style.color = 'red';
-                msg.innerText = error.message || 'خطأ في حفظ الإعدادات';
-            }
-        }
-
-        async function uploadLogo() {
-            const fileInput = document.getElementById('companyLogo');
-            const file = fileInput.files[0];
-            const msg = document.getElementById('companyMsg');
-
-            if (!file) {
-                msg.style.color = 'red';
-                msg.innerText = 'الرجاء اختيار صورة أولاً';
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('logo', file);
-
-            try {
-                const token = Api.token;
-                const res = await fetch('/api/company/logo', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message);
-
-                msg.style.color = 'green';
-                msg.innerText = 'تم رفع اللوجو بنجاح';
-
-                if (data.settings.logoPath) {
-                    displayLogoPreview(data.settings.logoPath);
-                    document.getElementById('deleteLogoBtn').style.display = 'inline-block';
-                }
-
-                fileInput.value = '';
-                setTimeout(() => msg.innerText = '', 3000);
-            } catch (error) {
-                msg.style.color = 'red';
-                msg.innerText = error.message || 'خطأ في رفع اللوجو';
-            }
-        }
-
-        async function deleteLogo() {
-            if (!confirm('هل أنت متأكد من حذف اللوجو؟')) return;
-
-            const msg = document.getElementById('companyMsg');
-
-            try {
-                await Api.delete('/api/company/logo');
-
-                msg.style.color = 'green';
-                msg.innerText = 'تم حذف اللوجو بنجاح';
-
-                document.getElementById('logoPreview').innerHTML = '';
-                document.getElementById('deleteLogoBtn').style.display = 'none';
-
-                setTimeout(() => msg.innerText = '', 3000);
-            } catch (error) {
-                msg.style.color = 'red';
-                msg.innerText = error.message || 'خطأ في حذف اللوجو';
-            }
-        }
-
         async function downloadBackup() {
             const btn = document.querySelector('.btn-primary');
             const msg = document.getElementById('msg');
@@ -286,6 +169,96 @@
                 btn.innerText = 'استعادة النسخة';
             }
         }
+        // Company Settings Logic
+        async function loadSettings() {
+            try {
+                // We'll use a direct fetch here since we haven't added specific method to Api class yet
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                const res = await fetch('/api/settings', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) return; // Might be 403 if not admin, but that's fine
+
+                const settings = await res.json();
+
+                if (settings.company_name) {
+                    document.getElementById('companyName').value = settings.company_name;
+                }
+
+                if (settings.company_logo) {
+                    const img = document.getElementById('logoPreview');
+                    // Add timestamp to bust cache
+                    img.src = settings.company_logo + `?t=${Date.now()}`;
+                    img.style.display = 'block';
+                }
+
+            } catch (e) { console.error('Error loading settings:', e); }
+        }
+
+        async function saveSettings() {
+            const company_name = document.getElementById('companyName').value;
+            if (!company_name) return alert('الرجاء إدخال اسم الشركة');
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ company_name })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert('تم حفظ الإعدادات');
+                } else {
+                    alert(data.message || 'حدث خطأ');
+                }
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function uploadLogo() {
+            const input = document.getElementById('companyLogo');
+            if (input.files.length === 0) return alert('الرجاء اختيار صورة أولاً');
+
+            const btn = document.getElementById('btnUpload');
+            btn.disabled = true;
+            btn.innerText = 'جاري الرفع...';
+
+            const formData = new FormData();
+            formData.append('logo', input.files[0]);
+
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/api/settings/logo', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('تم رفع الشعار بنجاح');
+                    loadSettings(); // Refresh preview
+                    input.value = ''; // Clear input
+                } else {
+                    alert(data.message || 'حدث خطأ');
+                }
+            } catch (e) {
+                alert(e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'رفع الشعار';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSettings);
     </script>
 </body>
 

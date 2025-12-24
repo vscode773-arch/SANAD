@@ -32,7 +32,7 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/branches', require('./routes/branches.routes'));
 app.use('/api/maintenance', maintenanceRoutes);
-app.use('/api/company', require('./routes/company.routes'));
+app.use('/api/settings', require('./routes/settings.routes'));
 
 // Catch-all for frontend (Single Page Application behavior if needed, or just redirect)
 app.get('*', (req, res) => {
