@@ -375,13 +375,18 @@
             }
         };
 
-        window.printVoucher = (v) => {
-            // Using jsPDF to generate a clean Voucher
-            // const { jsPDF } = window.jspdf;
+        window.printVoucher = async (v) => {
+            // Load company settings first
+            let companyName = 'BILL PRO';
+            let companyLogo = '';
 
-            // Note: jsPDF default font doesn't support Arabic.
-            // We need to use html to canvas or a font.
-            // Recommending window.print() on a new tab for best Arabic support without heavy font loading.
+            try {
+                const settings = await Api.get('/api/company');
+                companyName = settings.companyName || 'BILL PRO';
+                companyLogo = settings.logoPath || '';
+            } catch (error) {
+                console.log('Using default company settings');
+            }
 
             const printWindow = window.open('', '_blank', 'width=800,height=600');
 
@@ -393,6 +398,11 @@
             const timeStr = timeObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             const dateStr = new Date(v.date).toLocaleDateString('ar-EG');
 
+            // Logo HTML if available
+            const logoHtml = companyLogo
+                ? `<img src="${companyLogo}" alt="${companyName}" style="max-width: 120px; max-height: 80px; margin-bottom: 0.5rem;">`
+                : '';
+
             printWindow.document.write(`
                 <html dir="rtl" lang="ar">
                 <head>
@@ -400,21 +410,28 @@
                     <style>
                         body { font-family: 'Tajawal', sans-serif; padding: 2rem; direction: rtl; }
                         .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 1rem; margin-bottom: 2rem; }
+                        .company-logo { margin-bottom: 0.5rem; }
+                        .company-name { font-size: 1.3rem; font-weight: bold; color: #2563eb; margin-bottom: 0.5rem; }
                         .row { display: flex; margin-bottom: 1rem; }
                         .label { font-weight: bold; width: 150px; }
                         .value { flex: 1; border-bottom: 1px dotted #ccc; }
                         .amount-box { border: 2px solid #333; padding: 1rem; text-align: center; font-size: 1.5rem; margin: 1rem 0; }
                         .footer { margin-top: 3rem; display: flex; justify-content: space-between; }
+                        @media print {
+                            body { padding: 1rem; }
+                        }
                     </style>
                      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
                 </head>
                 <body>
                     <div class="header">
-                        <h1>سند صرف</h1>
-                        <h3>Payment Voucher</h3>
+                        ${logoHtml}
+                        <div class="company-name">${companyName}</div>
+                        <h1 style="margin: 0.5rem 0;">سند صرف</h1>
+                        <h3 style="margin: 0; color: #666; font-weight: normal;">Payment Voucher</h3>
                     </div>
                     
-                    <div style="display: flex; justify-content: space-between;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
                         <div><strong>رقم السند:</strong> ${v.voucherNo}</div>
                         <div><strong>التاريخ:</strong> ${dateStr} - ${timeStr}</div>
                     </div>
