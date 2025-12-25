@@ -1,48 +1,100 @@
-# دليل نشر تطبيق "السند برو" على الإنترنت (Railway)
+# دليل نشر تطبيق "السند برو" على الإنترنت
 
-بما أن التطبيق يستخدم قاعدة بيانات **SQLite** (ملف محلي `dev.db`)، فإن رفعه على خوادم سحابية مثل Railway أو Render يتطلب انتباهاً خاصاً لضمان عدم ضياع البيانات عند إعادة تشغيل الخادم.
+التطبيق الآن يعمل بقاعدة بيانات **PostgreSQL** خارجية لضمان عدم ضياع البيانات.
 
-## الخيار الأفضل: استخدام Railway مع Volume (قرص تخزين دائم)
+## المتطلبات:
 
-خدمة **Railway** توفر ميزة تسمى **Volumes** تسمح بالاحتفاظ بملف قاعدة البيانات حتى بعد التحديثات.
+1. **قاعدة بيانات PostgreSQL** - يمكنك الحصول عليها من:
+   - [Neon.tech](https://neon.tech) (مجانية)
+   - [Supabase](https://supabase.com) 
+   - Render PostgreSQL
 
-### الخطوات:
+2. **منصة استضافة** - مثل:
+   - [Render.com](https://render.com)
+   - Railway.app
+   - Vercel (للواجهة فقط)
 
-1.  **رفع الكود على GitHub**:
-    *   قم بإنشاء مستودع (Repository) جديد على GitHub.
-    *   ارفع ملفات المشروع عليه (تأكد من عدم رفع مجلد `node_modules` أو ملف `.env`).
-    *   تأكد من وجود ملف `.gitignore` يحتوي على:
-        ```text
-        node_modules
-        .env
-        backend/prisma/*.db
-        backend/prisma/*.db-journal
-        uploads/
-        ```
+## الخطوات:
 
-2.  **إنشاء مشروع جديد في Railway**:
-    *   ادخل على [Railway.app](https://railway.app/).
-    *   اضغط **New Project** -> **Deploy from GitHub repo**.
-    *   اختر المستودع الذي رفعته.
+### 1. إعداد قاعدة البيانات (Neon)
 
-3.  **الإعدادات (Variables)**:
-    *   بعد الإنشاء، اذهب إلى تبويب **Variables**.
-    *   أضف المتغيرات التالية (نفس الموجودة في `.env` المحلي لكن للإنتاج):
-        *   `NODE_ENV` = `production`
-        *   `JWT_SECRET` = (ضع رمزاً طويلاً ومعقداً عشوائياً)
-        *   `DATABASE_URL` = `file:/app/data/dev.db` (لاحظ المسار `/app/data/`)
+1. اذهب إلى [console.neon.tech](https://console.neon.tech)
+2. أنشئ قاعدة بيانات جديدة (أو استخدم الموجودة)
+3. انسخ **Connection String** من لوحة التحكم
+   - صيغته: `postgresql://user:password@ep-xxx.neon.tech/dbname?sslmode=require`
 
-4.  **إضافة قرص تخزين (Volume)**:
-    *   اذهب إلى إعدادات الخدمة (Settings) في Railway.
-    *   ابحث عن قسم **Volumes**.
-    *   اضغط **Add Volume**.
-    *   اكتب مسار المجلد (Mount Path): `/app/data`
-    *   هذا سيضمن أن يتم حفظ ملف قاعدة البيانات في هذا المجلد المحمي.
+### 2. النشر على Render
 
-5.  **توليد قاعدة البيانات**:
-    *   عند التشغيل لأول مرة، سيقوم Prisma بإنشاء الملف تلقائياً بفضل إعداداتنا.
-    *   قد تحتاج لتفيذ أمر `npx prisma migrate deploy` من خلال سطر أوامر Railway (Command Palette) إذا لزم الأمر، لكن غالباً سيعمل تلقائياً مع الكود الحالي.
+#### أ. رفع الكود على GitHub (إذا لم تفعل):
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin YOUR_GITHUB_REPO_URL
+git push -u origin main
+```
 
-### ملاحظات:
-*   إذا لم تستخدم Volume، سيتم مسح قاعدة البيانات في كل مرة تقوم فيها بتحديث الكود.
-*   تطبيقك يعمل الآن على رابط مثل: `https://sanad-pro-production.up.railway.app`
+#### ب. إنشاء Web Service على Render:
+
+1. اذهب إلى [dashboard.render.com](https://dashboard.render.com)
+2. اضغط **New** → **Web Service**
+3. اربط حسابك بـ GitHub واختر المستودع
+4. املأ الإعدادات:
+   - **Name**: `sanad-pro` (أو أي اسم)
+   - **Region**: Frankfurt (أو الأقرب لك)
+   - **Branch**: `main`
+   - **Root Directory**: اتركه فارغاً
+   - **Build Command**: `npm install && cd backend && npx prisma generate && npx prisma db push`
+   - **Start Command**: `npm start`
+
+#### ج. إضافة المتغيرات البيئية (Environment Variables):
+
+في صفحة إعدادات الخدمة على Render، أضف:
+
+| Key | Value |
+|-----|-------|
+| `NODE_ENV` | `production` |
+| `PORT` | `3000` |
+| `JWT_SECRET` | رمز طويل عشوائي مثل: `your-very-long-secret-key-here-123456` |
+| `DATABASE_URL` | الصق رابط Neon الذي نسخته (يبدأ بـ `postgresql://...`) |
+
+#### د. النشر:
+
+- اضغط **Create Web Service**
+- انتظر اكتمال البناء (Build)
+- سيعطيك رابطاً مثل: `https://sanad-pro.onrender.com`
+
+### 3. إنشاء المستخدم الأول
+
+بعد نجاح النشر، قم بتشغيل الأمر التالي عبر **Shell** في Render:
+
+```bash
+node seed.js
+```
+
+أو أنشئ المستخدم مباشرة عبر لوحة قاعدة البيانات في Neon.
+
+الحساب الافتراضي:
+- **اسم المستخدم**: `admin`
+- **كلمة المرور**: `123456` (غيّرها فوراً!)
+
+---
+
+## ملاحظات مهمة:
+
+✅ **النسخ الاحتياطي**: تقوم Neon تلقائياً بعمل نسخ احتياطية يومية.  
+✅ **الأمان**: غيّر كلمة مرور المدير فوراً بعد أول دخول.  
+✅ **التحديثات**: في كل مرة تعمل `git push`، ستتم إعادة نشر التطبيق تلقائياً على Render.
+
+---
+
+## استكشاف الأخطاء:
+
+- **خطأ قاعدة البيانات**: تأكد أن `DATABASE_URL` صحيح ويبدأ بـ `postgresql://`
+- **خطأ Prisma**: تأكد من تشغيل `npx prisma db push` في Build Command
+- **البيانات لا تظهر**: تحقق من Logs في لوحة Render
+
+---
+
+**رابط التطبيق الحالي**: سيتم توفيره بعد النشر
+
