@@ -1,7 +1,13 @@
 
 const prisma = require('../utils/prisma');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Get all settings as a simple object
 exports.getSettings = async (req, res, next) => {
@@ -36,28 +42,47 @@ exports.updateSettings = async (req, res, next) => {
     }
 };
 
-// Upload Logo
+// Upload Logo to Cloudinary
 exports.uploadLogo = async (req, res, next) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'الرجاء رفع ملف صورة' });
         }
 
-        // Generate a public URL path
-        // File is saved in frontend/assets/uploads/ by multer (we'll configure multer in routes)
-        // Access path: /assets/uploads/filename
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'sanad-pro/logos',
+            transformation: [
+                { width: 500, height: 500, crop: 'limit' },
+                { quality: 'auto' }
+            ]
+        });
 
-        const logoPath = '/assets/uploads/' + req.file.filename;
+        // Delete local temp file
+        const fs = require('fs');
+        fs.unlinkSync(req.file.path);
+
+        // Get the secure URL from Cloudinary
+        const logoUrl = result.secure_url;
 
         // Save to DB
         await prisma.systemSetting.upsert({
             where: { key: 'company_logo' },
-            update: { value: logoPath },
-            create: { key: 'company_logo', value: logoPath }
+            update: { value: logoUrl },
+            create: { key: 'company_logo', value: logoUrl }
         });
 
-        res.json({ message: 'تم رفع الشعار بنجاح', logoPath });
+        res.json({ message: 'تم رفع الشعار بنجاح', logoPath: logoUrl });
     } catch (error) {
+        // Clean up temp file if upload failed
+        if (req.file && req.file.path) {
+            try {
+                const fs = require('fs');
+                fs.unlinkSync(req.file.path);
+            } catch (e) { }
+        }
+        console.error('Cloudinary upload error:', error);
         next(error);
     }
 };
+
