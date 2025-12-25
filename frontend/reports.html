@@ -18,7 +18,8 @@
             .btn,
             input,
             select,
-            label {
+            label,
+            .navbar {
                 display: none !important;
             }
 
@@ -74,7 +75,7 @@
                 <h2 id="printCompanyName" style="margin:0; color:var(--primary);">اسم الشركة</h2>
                 <p style="margin:0; color:#666;">تقرير الملخص المالي</p>
             </div>
-            <img id="printLogo" src="" alt="Logo" class="print-logo">
+            <img id="printLogo" src="" alt="Logo" class="print-logo" onerror="this.style.display='none'">
         </div>
 
         <h1 class="no-print">التقارير والسجلات</h1>
