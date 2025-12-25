@@ -419,58 +419,58 @@
         // Convert number to Arabic words
         function numberToArabicWords(num) {
             if (!num || num === 0) return 'صفر';
+            num = Math.floor(num);
+            if (num >= 1000000) return num.toLocaleString('ar-SA') + ' ريال';
 
-            const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
-            const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
-            const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
-            const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
+            function convert(n) {
+                const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
+                const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+                const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+                const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
 
-            num = Math.floor(num); // Remove decimals
-            if (num >= 1000000) return num.toLocaleString('ar-SA') + ' ريال'; // Too large, show as number
+                let res = '';
 
-            let result = '';
+                // Thousands
+                const thousands = Math.floor(n / 1000);
+                if (thousands > 0) {
+                    if (thousands === 1) res += 'ألف';
+                    else if (thousands === 2) res += 'ألفان';
+                    else if (thousands <= 10) res += ones[thousands] + ' آلاف';
+                    else res += convert(thousands) + ' ألف';
 
-            // Thousands
-            const thousands = Math.floor(num / 1000);
-            if (thousands > 0) {
-                if (thousands === 1) result += 'ألف';
-                else if (thousands === 2) result += 'ألفان';
-                else if (thousands <= 10) result += ones[thousands] + ' آلاف';
-                else result += numberToArabicWords(thousands) + ' ألف';
-                result += ' و';
-            }
-
-            num = num % 1000;
-
-            // Hundreds
-            const hundred = Math.floor(num / 100);
-            if (hundred > 0) {
-                result += hundreds[hundred];
-                if (num % 100 > 0) result += ' و';
-            }
-
-            num = num % 100;
-
-            // Tens and ones (ones first)
-            if (num >= 10 && num < 20) {
-                result += teens[num - 10];
-            } else {
-                const ten = Math.floor(num / 10);
-                const one = num % 10;
-
-                // Write ones first
-                if (one > 0) {
-                    result += ones[one];
-                    if (ten > 0) result += ' و';
+                    if (n % 1000 > 0) res += ' و';
                 }
 
-                // Then tens
-                if (ten > 0) {
-                    result += tens[ten];
+                n = n % 1000;
+
+                // Hundreds
+                const hundred = Math.floor(n / 100);
+                if (hundred > 0) {
+                    res += hundreds[hundred];
+                    if (n % 100 > 0) res += ' و';
                 }
+
+                n = n % 100;
+
+                // Tens and Ones
+                if (n >= 10 && n < 20) {
+                    res += teens[n - 10];
+                } else {
+                    const ten = Math.floor(n / 10);
+                    const one = n % 10;
+
+                    if (one > 0) {
+                        res += ones[one];
+                        if (ten > 0) res += ' و';
+                    }
+                    if (ten > 0) {
+                        res += tens[ten];
+                    }
+                }
+                return res;
             }
 
-            return result + ' ريالاً';
+            return convert(num) + ' ريالاً';
         }
 
         // Overwrite printVoucher
