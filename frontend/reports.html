@@ -325,8 +325,25 @@
                 const style = document.createElement('style');
                 style.innerHTML = `
                     @media print {
+                        @page {
+                            size: A4;
+                            margin: ${mt}mm ${ml}mm ${mb}mm ${mr}mm !important; /* Top Right Bottom Left - wait, CSS @page uses physical directions usually, but let's check RTL. Standard CSS is Top Right Bottom Left. */
+                            /* In RTL context, user expects "Right" margin to be on the Right. */
+                            /* Let's strictly map inputs: Top->Top, Right->Right, Bottom->Bottom, Left->Left */
+                            margin-top: ${mt}mm !important;
+                            margin-right: ${mr}mm !important;
+                            margin-bottom: ${mb}mm !important;
+                            margin-left: ${ml}mm !important;
+                        }
                         body {
-                            padding: ${mt}mm ${mr}mm ${mb}mm ${ml}mm !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                            width: 100% !important;
+                        }
+                        .container {
+                            width: 100% !important;
+                            margin: 0 auto !important;
+                            padding: 0 !important;
                         }
                         #printHeader {
                             flex-direction: ${logoPos === 'right' ? 'row-reverse' : 'row'} !important;
