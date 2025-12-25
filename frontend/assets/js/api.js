@@ -132,4 +132,9 @@ class Api {
     static deleteBranch(id) {
         return this.request(`/branches/${id}`, 'DELETE');
     }
+
+    // Settings
+    static getSettings() {
+        return this.request('/settings');
+    }
 }
