@@ -406,6 +406,61 @@
             // I'll just add this one.
         });
 
+        // Convert number to Arabic words
+        function numberToArabicWords(num) {
+            if (!num || num === 0) return 'صفر';
+
+            const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
+            const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+            const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+            const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
+
+            num = Math.floor(num); // Remove decimals
+            if (num >= 1000000) return num.toLocaleString('ar-SA') + ' ريال'; // Too large, show as number
+
+            let result = '';
+
+            // Thousands
+            const thousands = Math.floor(num / 1000);
+            if (thousands > 0) {
+                if (thousands === 1) result += 'ألف';
+                else if (thousands === 2) result += 'ألفان';
+                else if (thousands <= 10) result += ones[thousands] + ' آلاف';
+                else result += numberToArabicWords(thousands) + ' ألف';
+                result += ' و';
+            }
+
+            num = num % 1000;
+
+            // Hundreds
+            const hundred = Math.floor(num / 100);
+            if (hundred > 0) {
+                result += hundreds[hundred];
+                if (num % 100 > 0) result += ' و';
+            }
+
+            num = num % 100;
+
+            // Tens and ones
+            if (num >= 10 && num < 20) {
+                result += teens[num - 10];
+            } else {
+                const ten = Math.floor(num / 10);
+                const one = num % 10;
+
+                if (ten > 0) {
+                    result += tens[ten];
+                    if (one > 0) result += ' و';
+                }
+
+                if (one > 0) {
+                    result += ones[one];
+                }
+            }
+
+            return result + ' ريالاً';
+        }
+
         // Overwrite printVoucher
         window.printVoucher = (v) => {
             const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -473,11 +528,7 @@
                     
                     <div class="row">
                         <span class="label">مبلغاً وقدره/ </span>
-                        <span class="value" id="amountText">...</span>
-                        <script>
-                            // Simple number to text placeholder or function if you have one
-                            // For now, we leave dots or manual
-                        <\/script>
+                        <span class="value">${numberToArabicWords(v.amount)}</span>
                     </div>
 
                     <div class="row">
