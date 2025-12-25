@@ -35,6 +35,11 @@ const notificationService = require('../services/oneSignal.service');
 exports.createVoucher = async (req, res, next) => {
     try {
         const { date, supplierId, amount, paymentMethod, description, paymentFor } = req.body;
+
+        if (!paymentFor) {
+            return res.status(400).json({ message: 'حقل (مقابل) مطلوب' });
+        }
+
         const voucherNo = await generateVoucherNo();
 
         // Get supplier name for snapshot (optional, but good for history)

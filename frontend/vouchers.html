@@ -340,6 +340,11 @@
                 return;
             }
 
+            if (!data.paymentFor) {
+                alert('الرجاء اختيار (مقابل) من القائمة');
+                return;
+            }
+
             try {
                 if (id) {
                     await Api.updateVoucher(id, data);
