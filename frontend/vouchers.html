@@ -102,6 +102,15 @@
                     <label class="form-label">البيان / الوصف</label>
                     <textarea id="vDesc" class="form-control" rows="3"></textarea>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">مقابل</label>
+                    <select id="vPaymentFor" class="form-control">
+                        <option value="">-- اختر --</option>
+                        <option value="تصفية حساب">تصفية حساب</option>
+                        <option value="سداد فاتورة">سداد فاتورة</option>
+                        <option value="جزء من حساب">جزء من حساب</option>
+                    </select>
+                </div>
 
                 <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
                     <button type="button" onclick="closeModal()" class="btn btn-outline">إلغاء</button>
@@ -323,7 +332,8 @@
                 supplierId: document.getElementById('vSupplier').value,
                 amount: parseFloat(document.getElementById('vAmount').value),
                 paymentMethod: document.getElementById('vMethod').value,
-                description: document.getElementById('vDesc').value
+                description: document.getElementById('vDesc').value,
+                paymentFor: document.getElementById('vPaymentFor').value
             };
 
             if (!data.supplierId) {
@@ -537,6 +547,11 @@
                         <span class="label">وذلك مقابل/ </span>
                         <span class="value">${v.description || ''}</span>
                     </div>
+                    
+                    ${v.paymentFor ? `<div class="row">
+                        <span class="label">نوع المقابل/ </span>
+                        <span class="value">${v.paymentFor}</span>
+                    </div>` : ''}
                     
                     <div class="row">
                         <span class="label">طريقة الدفع/ </span>
