@@ -8,14 +8,78 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="icon" type="image/png" href="assets/images/logo.png">
+    <style>
+        @media print {
+            body {
+                background: white;
+            }
+
+            .no-print,
+            .btn,
+            input,
+            select,
+            label {
+                display: none !important;
+            }
+
+            .card {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+
+            .container {
+                padding: 0;
+                max-width: 100%;
+                margin: 0;
+            }
+
+            h1 {
+                display: none;
+            }
+
+            #printHeader {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 2rem;
+                border-bottom: 2px solid #eee;
+                padding-bottom: 1rem;
+            }
+
+            .print-logo {
+                max-height: 80px;
+            }
+
+            /* Show filter values instead of inputs */
+            .print-only-filters {
+                display: block !important;
+                margin-bottom: 1rem;
+            }
+        }
+
+        #printHeader,
+        .print-only-filters {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
 
     <div class="container animate-fade-in">
-        <h1>التقارير والسجلات</h1>
+        <!-- Print Header -->
+        <div id="printHeader">
+            <div style="text-align: right;">
+                <h2 id="printCompanyName" style="margin:0; color:var(--primary);">اسم الشركة</h2>
+                <p style="margin:0; color:#666;">تقرير الملخص المالي</p>
+            </div>
+            <img id="printLogo" src="" alt="Logo" class="print-logo">
+        </div>
 
-        <div style="margin-bottom: 2rem;">
+        <h1 class="no-print">التقارير والسجلات</h1>
+
+        <div style="margin-bottom: 2rem;" class="no-print">
             <button onclick="showSection('summary')" class="btn btn-primary" id="btn-summary">الملخص المالي</button>
             <button onclick="showSection('audit')" class="btn btn-outline" id="btn-audit">سجل النشاطات</button>
         </div>
@@ -23,8 +87,16 @@
         <!-- Summary Section -->
         <div id="section-summary" class="animate-fade-in">
             <div class="card">
-                <h2>الملخص المالي</h2>
-                <div style="display: flex; gap: 1rem; align-items: end; margin-bottom: 1rem;">
+                <h2 class="no-print">الملخص المالي</h2>
+
+                <!-- Print Only Filter Info -->
+                <div class="print-only-filters">
+                    <p><strong>من تاريخ:</strong> <span id="pStart">-</span> &nbsp;&nbsp; <strong>إلى تاريخ:</strong>
+                        <span id="pEnd">-</span>
+                    </p>
+                </div>
+
+                <div class="no-print" style="display: flex; gap: 1rem; align-items: end; margin-bottom: 1rem;">
                     <div>
                         <label class="form-label">من تاريخ</label>
                         <input type="date" id="repStart" class="form-control">
@@ -44,7 +116,7 @@
                 </div>
 
                 <div
-                    style="background: #f8fafc; padding: 2rem; border-radius: 1rem; text-align: center; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    style="background: #f8fafc; padding: 2rem; border-radius: 1rem; text-align: center; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; border: 1px solid #eee;">
                     <div>
                         <h3>إجمالي الصرف</h3>
                         <p id="repAmount" style="font-size: 3rem; color: var(--primary); font-weight: bold;">0</p>
@@ -57,13 +129,13 @@
 
                 <h3 style="margin-top: 2rem;">آخر العمليات</h3>
                 <div class="table-container">
-                    <table>
+                    <table style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr>
-                                <th>رقم السند</th>
-                                <th>التاريخ</th>
-                                <th>المورد</th>
-                                <th>المبلغ</th>
+                            <tr style="background:#f1f5f9;">
+                                <th style="padding:10px; border:1px solid #ddd;">رقم السند</th>
+                                <th style="padding:10px; border:1px solid #ddd;">التاريخ</th>
+                                <th style="padding:10px; border:1px solid #ddd;">المورد</th>
+                                <th style="padding:10px; border:1px solid #ddd;">المبلغ</th>
                             </tr>
                         </thead>
                         <tbody id="repRecentBody"></tbody>
@@ -105,6 +177,7 @@
             }
             loadSummary(); // Load default
             loadAudit();
+            loadCompanyInfo();
         });
 
         async function loadBranches() {
@@ -131,6 +204,10 @@
             const end = document.getElementById('repEnd').value;
             const branchId = document.getElementById('repBranch').value;
 
+            // Update Print Info
+            document.getElementById('pStart').innerText = start || 'الكل';
+            document.getElementById('pEnd').innerText = end || 'الكل';
+
             try {
                 const data = await Api.getSummary({ startDate: start, endDate: end, branchId });
                 document.getElementById('repAmount').innerText = parseFloat(data.totalAmount).toLocaleString() + ' ر.س';
@@ -141,16 +218,35 @@
                 data.recentTransactions.forEach(t => {
                     tbody.innerHTML += `
                         <tr>
-                            <td>${t.voucherNo}</td>
-                            <td>${new Date(t.date).toLocaleDateString('ar-EG')}</td>
-                            <td>${t.supplier}</td>
-                            <td>${parseFloat(t.amount).toLocaleString()}</td>
+                            <td style="padding:10px; border:1px solid #ddd;">${t.voucherNo}</td>
+                            <td style="padding:10px; border:1px solid #ddd;">${new Date(t.date).toLocaleDateString('ar-EG')}</td>
+                            <td style="padding:10px; border:1px solid #ddd;">${t.supplier}</td>
+                            <td style="padding:10px; border:1px solid #ddd;">${parseFloat(t.amount).toLocaleString()}</td>
                         </tr>
                     `;
                 });
             } catch (e) {
                 console.error(e);
             }
+        }
+
+        async function loadCompanyInfo() {
+            try {
+                const settings = await Api.getSettings();
+                const logoSetting = settings.find(s => s.key === 'company_logo');
+                const nameSetting = settings.find(s => s.key === 'company_name');
+
+                if (logoSetting && logoSetting.value) {
+                    document.getElementById('printLogo').src = logoSetting.value;
+                } else {
+                    document.getElementById('printLogo').style.display = 'none';
+                }
+
+                if (nameSetting && nameSetting.value) {
+                    document.getElementById('printCompanyName').innerText = nameSetting.value;
+                    document.title = 'تقرير - ' + nameSetting.value;
+                }
+            } catch (e) { console.error('Error loading company info', e); }
         }
 
         async function loadAudit() {
