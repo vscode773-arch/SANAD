@@ -128,40 +128,45 @@
                     </p>
                 </div>
 
-                <div class="no-print" style="display: flex; gap: 1rem; align-items: end; margin-bottom: 1rem;">
-                    <div>
+                <div class="no-print filter-container"
+                    style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 150px;">
                         <label class="form-label">من تاريخ</label>
-                        <input type="date" id="repStart" class="form-control">
+                        <input type="date" id="repStart" class="form-control" style="width: 100%;">
                     </div>
-                    <div>
+                    <div style="flex: 1; min-width: 150px;">
                         <label class="form-label">إلى تاريخ</label>
-                        <input type="date" id="repEnd" class="form-control">
+                        <input type="date" id="repEnd" class="form-control" style="width: 100%;">
                     </div>
-                    <div id="branchFilterDiv" style="display:none;">
+                    <div id="branchFilterDiv" style="display:none; flex: 1; min-width: 150px;">
                         <label class="form-label">الفرع</label>
-                        <select id="repBranch" class="form-control" style="min-width: 120px;">
+                        <select id="repBranch" class="form-control" style="width: 100%;">
                             <option value="">كل الفروع</option>
                         </select>
                     </div>
-                    <button onclick="loadSummary()" class="btn btn-primary">عرض التقرير</button>
-                    <button onclick="window.print()" class="btn btn-outline">طباعة</button>
+                    <div style="display: flex; gap: 0.5rem; flex: 1; min-width: 200px;">
+                        <button onclick="loadSummary()" class="btn btn-primary" style="flex: 1;">عرض التقرير</button>
+                        <button onclick="window.print()" class="btn btn-outline" style="flex: 1;">طباعة</button>
+                    </div>
                 </div>
 
-                <div
-                    style="background: #f8fafc; padding: 2rem; border-radius: 1rem; text-align: center; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; border: 1px solid #eee;">
+                <div class="stats-grid"
+                    style="background: #f8fafc; padding: 2rem; border-radius: 1rem; text-align: center; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; border: 1px solid #eee;">
                     <div>
                         <h3>إجمالي الصرف</h3>
-                        <p id="repAmount" style="font-size: 3rem; color: var(--primary); font-weight: bold;">0</p>
+                        <p id="repAmount"
+                            style="font-size: 2.5rem; color: var(--primary); font-weight: bold; word-break: break-word;">
+                            0</p>
                     </div>
                     <div>
                         <h3>عدد العمليات</h3>
-                        <p id="repCount" style="font-size: 3rem; color: var(--text); font-weight: bold;">0</p>
+                        <p id="repCount" style="font-size: 2.5rem; color: var(--text); font-weight: bold;">0</p>
                     </div>
                 </div>
 
                 <h3 style="margin-top: 2rem;">آخر العمليات</h3>
-                <div class="table-container">
-                    <table style="width: 100%; border-collapse: collapse;">
+                <div class="table-container" style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
                         <thead>
                             <tr style="background:#f1f5f9;">
                                 <th>رقم السند</th>
