@@ -10,8 +10,16 @@
     <link rel="icon" type="image/png" href="assets/images/logo.png">
     <style>
         @media print {
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
             body {
                 background: white;
+                font-family: 'Tajawal', sans-serif;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
 
             .no-print,
@@ -27,16 +35,14 @@
                 box-shadow: none;
                 border: none;
                 padding: 0;
+                margin: 0;
             }
 
             .container {
                 padding: 0;
                 max-width: 100%;
+                width: 100%;
                 margin: 0;
-            }
-
-            h1 {
-                display: none;
             }
 
             #printHeader {
@@ -44,17 +50,40 @@
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 2rem;
-                border-bottom: 2px solid #eee;
+                border-bottom: 2px solid #000;
                 padding-bottom: 1rem;
             }
 
             .print-logo {
                 max-height: 80px;
+                object-fit: contain;
+            }
+
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-top: 1rem;
+                font-size: 12px;
+            }
+
+            th,
+            td {
+                border: 1px solid #000 !important;
+                padding: 8px !important;
+                text-align: center !important;
+            }
+
+            th {
+                background-color: #f0f0f0 !important;
+                font-weight: bold;
             }
 
             /* Show filter values instead of inputs */
             .print-only-filters {
                 display: block !important;
+                border: 1px solid #eee;
+                padding: 10px;
+                border-radius: 5px;
                 margin-bottom: 1rem;
             }
         }
@@ -72,10 +101,10 @@
         <!-- Print Header -->
         <div id="printHeader">
             <div style="text-align: right;">
-                <h2 id="printCompanyName" style="margin:0; color:var(--primary);">اسم الشركة</h2>
-                <p style="margin:0; color:#666;">تقرير الملخص المالي</p>
+                <h2 id="printCompanyName" style="margin:0; color:var(--primary);">BILL PRO</h2>
+                <p style="margin:0; color:#333;">تقرير الملخص المالي</p>
             </div>
-            <img id="printLogo" src="" alt="Logo" class="print-logo" onerror="this.style.display='none'">
+            <img id="printLogo" src="assets/images/logo.png" alt="Logo" class="print-logo">
         </div>
 
         <h1 class="no-print">التقارير والسجلات</h1>
@@ -92,8 +121,10 @@
 
                 <!-- Print Only Filter Info -->
                 <div class="print-only-filters">
-                    <p><strong>من تاريخ:</strong> <span id="pStart">-</span> &nbsp;&nbsp; <strong>إلى تاريخ:</strong>
-                        <span id="pEnd">-</span>
+                    <p style="margin: 0;">
+                        <strong>التاريخ:</strong> <span id="pStart"></span> - <span id="pEnd"></span>
+                        &nbsp;|&nbsp;
+                        <strong>تاريخ الطباعة:</strong> <span id="pDate"></span>
                     </p>
                 </div>
 
@@ -133,10 +164,10 @@
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background:#f1f5f9;">
-                                <th style="padding:10px; border:1px solid #ddd;">رقم السند</th>
-                                <th style="padding:10px; border:1px solid #ddd;">التاريخ</th>
-                                <th style="padding:10px; border:1px solid #ddd;">المورد</th>
-                                <th style="padding:10px; border:1px solid #ddd;">المبلغ</th>
+                                <th>رقم السند</th>
+                                <th>التاريخ</th>
+                                <th>المورد</th>
+                                <th>المبلغ</th>
                             </tr>
                         </thead>
                         <tbody id="repRecentBody"></tbody>
@@ -179,6 +210,8 @@
             loadSummary(); // Load default
             loadAudit();
             loadCompanyInfo();
+            // Set Print Date
+            document.getElementById('pDate').innerText = new Date().toLocaleDateString('ar-EG');
         });
 
         async function loadBranches() {
@@ -219,10 +252,10 @@
                 data.recentTransactions.forEach(t => {
                     tbody.innerHTML += `
                         <tr>
-                            <td style="padding:10px; border:1px solid #ddd;">${t.voucherNo}</td>
-                            <td style="padding:10px; border:1px solid #ddd;">${new Date(t.date).toLocaleDateString('ar-EG')}</td>
-                            <td style="padding:10px; border:1px solid #ddd;">${t.supplier}</td>
-                            <td style="padding:10px; border:1px solid #ddd;">${parseFloat(t.amount).toLocaleString()}</td>
+                            <td>${t.voucherNo}</td>
+                            <td>${new Date(t.date).toLocaleDateString('ar-EG')}</td>
+                            <td>${t.supplier}</td>
+                            <td>${parseFloat(t.amount).toLocaleString()}</td>
                         </tr>
                     `;
                 });
@@ -237,17 +270,21 @@
                 const logoSetting = settings.find(s => s.key === 'company_logo');
                 const nameSetting = settings.find(s => s.key === 'company_name');
 
+                // Default logo is assets/images/logo.png, override if setting exists
                 if (logoSetting && logoSetting.value) {
                     document.getElementById('printLogo').src = logoSetting.value;
-                } else {
-                    document.getElementById('printLogo').style.display = 'none';
                 }
+
+                // Show logo if src is valid, no need to hide on error, just keeps fallback or empty
 
                 if (nameSetting && nameSetting.value) {
                     document.getElementById('printCompanyName').innerText = nameSetting.value;
                     document.title = 'تقرير - ' + nameSetting.value;
                 }
-            } catch (e) { console.error('Error loading company info', e); }
+            } catch (e) {
+                console.error('Error loading company info, using defaults', e);
+                // In case of error, defaults in HTML (BILL PRO and fallback image) will stay
+            }
         }
 
         async function loadAudit() {
