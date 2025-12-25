@@ -34,12 +34,9 @@ const notificationService = require('../services/oneSignal.service');
 
 exports.createVoucher = async (req, res, next) => {
     try {
-        console.log(">>> START CREATING VOUCHER <<<");
         const { date, supplierId, amount, paymentMethod, description, paymentFor } = req.body;
-        console.log("Received data:", JSON.stringify(req.body));
 
         if (!paymentFor) {
-            console.error("Missing paymentFor");
             return res.status(400).json({ message: 'حقل (مقابل) مطلوب' });
         }
 
@@ -50,9 +47,11 @@ exports.createVoucher = async (req, res, next) => {
         if (!supplier) return res.status(400).json({ message: 'المورد غير صالح' });
 
         // Fetch user to get branchId (since it might not be in token yet)
-        const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-
-        console.log("User Branch Check:", user.username, "BranchID:", user.branchId);
+        // Use parseInt to ensure correct type matching for ID
+        const user = await prisma.user.findUnique({
+            where: { id: parseInt(req.user.id) },
+            select: { id: true, branchId: true }
+        });
 
         const voucher = await prisma.voucher.create({
             data: {
@@ -65,11 +64,9 @@ exports.createVoucher = async (req, res, next) => {
                 description,
                 paymentFor,
                 createdById: req.user.id,
-                branchId: user.branchId // Link to user's branch
+                branchId: user ? user.branchId : null // Link to user's branch
             }
         });
-
-        console.log("Voucher Created with BranchID:", voucher.branchId);
 
         await prisma.auditLog.create({
             data: {

@@ -42,6 +42,7 @@
                             <th>المورد</th>
                             <th>الفرع</th> <!-- New Col -->
                             <th>المبلغ</th>
+                            <th>مقابل</th>
                             <th>طريقة الدفع</th>
                             <th>بواسطة</th>
                             <th>إجراءات</th>
@@ -268,7 +269,8 @@
                         <td>${v.supplier || v.supplierName || '-'}</td>
                         <td>${branchName}</td>
                         <td style="font-weight:bold; color: var(--primary);">${parseFloat(v.amount).toLocaleString()}</td>
-                        <td>${v.paymentMethod}</td>
+                        <td>${v.paymentFor || '-'}</td>
+                        <td>${methodAr(v.paymentMethod)}</td>
                         <td>${v.createdBy ? v.createdBy.fullName : '-'}</td>
                         <td>
                             ${actionsHtml}
@@ -346,9 +348,6 @@
             }
 
             try {
-                // DEBUG: Show data before sending
-                alert("DEBUG DATA: " + JSON.stringify(data));
-
                 if (id) {
                     await Api.updateVoucher(id, data);
                     alert('تم التعديل بنجاح');
