@@ -243,14 +243,19 @@
                 });
                 const data = await res.json();
 
+                console.log('Upload response:', data); // DEBUG
+
                 if (res.ok) {
                     alert('تم رفع الشعار بنجاح');
+                    console.log('Logo URL:', data.logoPath); // DEBUG
                     loadSettings(); // Refresh preview
                     input.value = ''; // Clear input
                 } else {
+                    console.error('Upload failed:', data); // DEBUG
                     alert(data.message || 'حدث خطأ');
                 }
             } catch (e) {
+                console.error('Upload error:', e); // DEBUG
                 alert(e.message);
             } finally {
                 btn.disabled = false;
