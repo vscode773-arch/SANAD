@@ -285,23 +285,35 @@
         async function loadCompanyInfo() {
             try {
                 const settings = await Api.getSettings();
-                const logoSetting = settings.find(s => s.key === 'company_logo');
-                const nameSetting = settings.find(s => s.key === 'company_name');
+                // Settings is an object { company_name: "...", company_logo: "..." }
 
-                // Default logo is assets/images/logo.png, override if setting exists
-                if (logoSetting && logoSetting.value) {
-                    document.getElementById('printLogo').src = logoSetting.value;
+                const logoUrl = settings['company_logo'];
+                const companyName = settings['company_name'];
+                const companyAddress = settings['company_address'];
+                const companyPhone = settings['company_phone'];
+
+                if (logoUrl) {
+                    document.getElementById('printLogo').src = logoUrl;
+                    document.getElementById('printLogo').style.display = 'block';
                 }
 
-                // Show logo if src is valid, no need to hide on error, just keeps fallback or empty
-
-                if (nameSetting && nameSetting.value) {
-                    document.getElementById('printCompanyName').innerText = nameSetting.value;
-                    document.title = 'تقرير - ' + nameSetting.value;
+                if (companyName) {
+                    document.getElementById('printCompanyName').innerText = companyName;
+                    document.title = 'تقرير - ' + companyName;
                 }
+
+                // Optional: Add phone/address if you want them in the header
+                if (companyPhone || companyAddress) {
+                    const infoP = document.querySelector('#printHeader p');
+                    if (infoP) {
+                        let infoText = 'تقرير الملخص المالي';
+                        if (companyPhone) infoText += ` | هاتف: ${companyPhone}`;
+                        infoP.innerText = infoText;
+                    }
+                }
+
             } catch (e) {
-                console.error('Error loading company info, using defaults', e);
-                // In case of error, defaults in HTML (BILL PRO and fallback image) will stay
+                console.error('Error loading company info', e);
             }
         }
 
