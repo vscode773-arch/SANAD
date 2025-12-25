@@ -12,10 +12,16 @@
         @media print {
             @page {
                 size: A4;
-                margin: 10mm;
+                margin: 0;
+                /* Remove default page margin to control it manually */
             }
 
             body {
+                margin: 0;
+                padding: 15mm;
+                /* Add consistent padding for A4 */
+                width: 100%;
+                box-sizing: border-box;
                 background: white;
                 font-family: 'Tajawal', sans-serif;
                 -webkit-print-color-adjust: exact;
@@ -39,30 +45,35 @@
             }
 
             .container {
-                padding: 0;
-                max-width: 100%;
-                width: 100%;
-                margin: 0;
+                width: 100% !important;
+                max-width: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
             #printHeader {
                 display: flex !important;
+                flex-direction: row-reverse;
+                /* Logo on Right (first in RTL), Text on Left */
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 2rem;
                 border-bottom: 2px solid #000;
                 padding-bottom: 1rem;
+                width: 100%;
             }
 
             .print-logo {
-                max-height: 80px;
+                max-height: 100px;
+                /* Bigger logo */
+                max-width: 200px;
                 object-fit: contain;
             }
 
             table {
                 width: 100% !important;
                 border-collapse: collapse !important;
-                margin-top: 1rem;
+                margin: 0 !important;
                 font-size: 12px;
             }
 
@@ -100,10 +111,12 @@
     <div class="container animate-fade-in">
         <!-- Print Header -->
         <div id="printHeader">
-            <div style="text-align: right;">
-                <h2 id="printCompanyName" style="margin:0; color:var(--primary);">BILL PRO</h2>
-                <p style="margin:0; color:#333;">تقرير الملخص المالي</p>
+            <!-- Text Info (Will be on Left because of row-reverse) -->
+            <div style="text-align: left;">
+                <h2 id="printCompanyName" style="margin:0; color:var(--primary); font-size: 1.5rem;">BILL PRO</h2>
+                <p style="margin:5px 0 0; color:#333;">تقرير الملخص المالي</p>
             </div>
+            <!-- Logo (Will be on Right) -->
             <img id="printLogo" src="assets/images/logo.png" alt="Logo" class="print-logo">
         </div>
 
