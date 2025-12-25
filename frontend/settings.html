@@ -51,6 +51,48 @@
                     (PNG)</small>
                 <button onclick="uploadLogo()" class="btn btn-outline" id="btnUpload">رفع الشعار</button>
             </div>
+
+            <h3 style="margin-top: 1.5rem; font-size: 1.1rem; color: #333;">إعدادات هوامش الطباعة (ملم)</h3>
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div class="form-group">
+                    <label>هامش علوي</label>
+                    <input type="number" id="marginTop" class="form-control" value="15">
+                </div>
+                <div class="form-group">
+                    <label>هامش سفلي</label>
+                    <input type="number" id="marginBottom" class="form-control" value="15">
+                </div>
+                <div class="form-group">
+                    <label>هامش يمين</label>
+                    <input type="number" id="marginRight" class="form-control" value="15">
+                </div>
+                <div class="form-group">
+                    <label>هامش يسار</label>
+                    <input type="number" id="marginLeft" class="form-control" value="15">
+                </div>
+            </div>
+
+            <h3 style="margin-top: 1.5rem; font-size: 1.1rem; color: #333;">تنسيق الترويسة (الشعار واسم الشركة)</h3>
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div class="form-group">
+                    <label>محاذاة الشعار</label>
+                    <select id="logoPosition" class="form-control">
+                        <option value="right">يمين (افتراضي)</option>
+                        <option value="left">يسار</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>عروض الشعار (px)</label>
+                    <input type="number" id="logoWidth" class="form-control" value="200">
+                </div>
+                <div class="form-group">
+                    <label>حجم خط الاسم (px)</label>
+                    <input type="number" id="nameFontSize" class="form-control" value="24">
+                </div>
+            </div>
+
             <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #eee;">
             <button onclick="saveSettings()" class="btn btn-primary">حفظ الإعدادات</button>
         </div>
@@ -194,12 +236,35 @@
                     img.style.display = 'block';
                 }
 
-            } catch (e) { console.error('Error loading settings:', e); }
+                setVal('marginTop', settings.print_margin_top, 15);
+                setVal('marginBottom', settings.print_margin_bottom, 15);
+                setVal('marginRight', settings.print_margin_right, 15);
+                setVal('marginLeft', settings.print_margin_left, 15);
+
+                setVal('logoPosition', settings.print_logo_position, 'right');
+                setVal('logoWidth', settings.print_logo_width, 200);
+                setVal('nameFontSize', settings.print_name_font_size, 24);
+
+            } catch (e) {
+                console.error('Error loading settings:', e);
+            }
+        }
+
+        function setVal(id, val, def) {
+            const el = document.getElementById(id);
+            if (el) el.value = (val !== undefined && val !== null) ? val : def;
         }
 
         async function saveSettings() {
             const company_name = document.getElementById('companyName').value;
-            if (!company_name) return alert('الرجاء إدخال اسم الشركة');
+            const print_top = document.getElementById('marginTop').value;
+            const print_bottom = document.getElementById('marginBottom').value;
+            const print_right = document.getElementById('marginRight').value;
+            const print_left = document.getElementById('marginLeft').value;
+
+            const logo_pos = document.getElementById('logoPosition').value;
+            const logo_width = document.getElementById('logoWidth').value;
+            const name_size = document.getElementById('nameFontSize').value;
 
             try {
                 const token = localStorage.getItem('token');
@@ -209,7 +274,16 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ company_name })
+                    body: JSON.stringify({
+                        company_name,
+                        print_margin_top: print_top,
+                        print_margin_bottom: print_bottom,
+                        print_margin_right: print_right,
+                        print_margin_left: print_left,
+                        print_logo_position: logo_pos,
+                        print_logo_width: logo_width,
+                        print_name_font_size: name_size
+                    })
                 });
 
                 const data = await res.json();
