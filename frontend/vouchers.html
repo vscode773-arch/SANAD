@@ -441,20 +441,22 @@
 
             num = num % 100;
 
-            // Tens and ones
+            // Tens and ones (ones first)
             if (num >= 10 && num < 20) {
                 result += teens[num - 10];
             } else {
                 const ten = Math.floor(num / 10);
                 const one = num % 10;
 
-                if (ten > 0) {
-                    result += tens[ten];
-                    if (one > 0) result += ' و';
-                }
-
+                // Write ones first
                 if (one > 0) {
                     result += ones[one];
+                    if (ten > 0) result += ' و';
+                }
+
+                // Then tens
+                if (ten > 0) {
+                    result += tens[ten];
                 }
             }
 
