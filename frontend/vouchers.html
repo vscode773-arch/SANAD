@@ -346,6 +346,9 @@
             }
 
             try {
+                // DEBUG: Show data before sending
+                alert("DEBUG DATA: " + JSON.stringify(data));
+
                 if (id) {
                     await Api.updateVoucher(id, data);
                     alert('تم التعديل بنجاح');
