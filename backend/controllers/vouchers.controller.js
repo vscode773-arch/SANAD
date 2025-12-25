@@ -34,7 +34,7 @@ const notificationService = require('../services/oneSignal.service');
 
 exports.createVoucher = async (req, res, next) => {
     try {
-        const { date, supplierId, amount, paymentMethod, description } = req.body;
+        const { date, supplierId, amount, paymentMethod, description, paymentFor } = req.body;
         const voucherNo = await generateVoucherNo();
 
         // Get supplier name for snapshot (optional, but good for history)
@@ -53,6 +53,7 @@ exports.createVoucher = async (req, res, next) => {
                 amount,
                 paymentMethod,
                 description,
+                paymentFor,
                 createdById: req.user.id,
                 branchId: user.branchId // Link to user's branch
             }
@@ -150,7 +151,7 @@ exports.getVouchers = async (req, res, next) => {
 exports.updateVoucher = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { date, supplierId, amount, paymentMethod, description } = req.body;
+        const { date, supplierId, amount, paymentMethod, description, paymentFor } = req.body;
 
         const original = await prisma.voucher.findUnique({ where: { id: parseInt(id) } });
 
@@ -171,7 +172,8 @@ exports.updateVoucher = async (req, res, next) => {
                 supplierName: supplierName,
                 amount,
                 paymentMethod,
-                description
+                description,
+                paymentFor
             }
         });
 
