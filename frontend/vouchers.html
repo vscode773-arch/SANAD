@@ -552,13 +552,8 @@
 
                     <div class="row">
                         <span class="label">وذلك مقابل/ </span>
-                        <span class="value">${v.description || ''}</span>
+                        <span class="value">${v.paymentFor || ''} ${v.description ? ' - ' + v.description : ''}</span>
                     </div>
-                    
-                    ${v.paymentFor ? `<div class="row">
-                        <span class="label">نوع المقابل/ </span>
-                        <span class="value">${v.paymentFor}</span>
-                    </div>` : ''}
                     
                     <div class="row">
                         <span class="label">طريقة الدفع/ </span>
